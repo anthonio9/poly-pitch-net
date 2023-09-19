@@ -1,0 +1,134 @@
+=bash= Pitch tracking estimation
+
+https://github.com/interactiveaudiolab/penn[interactiveaudiolap/penn] 
+https://arxiv.org/abs/2301.12258[Pitch-Estimating Neural Networks]
+
+*new stuff*
+https://github.com/spotify/basic-pitch[Basic Pitch]
+
+=== Run the pitch tracker on the monofonic
+
+READ the paper.
+
+=== Maybe try synthesizing the data with virtual plugins
+
+try PyGuitarPro
+
+https://pyguitarpro.readthedocs.io/en/stable/pyguitarpro/api.html#guitarpro.write[PyGuitarPro]
+
+=== Try to build a network of our own
+
+
+== 16.06.2023
+
+Spotify Pedalboard - look it up
+
+=== What to do next?
+
+* Get familiar with the TabCNN and Yousician Paper code.
+* Checkout the spotify pedalboard.
+* Run PENN to synthesizer.
+* checkout the aalto computers with GPUs scicomp.aalto.fi
+
+== Articles read
+
+* https://archives.ismir.net/ismir2018/paper/000188.pdf[GuitarSet ]
+* https://arxiv.org/abs/2301.12258[PENN - Pitch-Estimating Neural Networks]
+* https://arxiv.org/abs/2212.03023[FretNet], https://github.com/cwitkowitz/guitar-transcription-continuous[FretNet.github]
+* https://archives.ismir.net/ismir2019/paper/000033.pdf[TAB-CNN], https://github.com/andywiggins/tab-cnn[tab-cnn.github]
+* https://arxiv.org/pdf/2107.14653.pdf[DadaGP dataset]
+
+Mutli-Path Neural Networks:
+* https://ieeexplore.ieee.org/document/10037818[3M: Multi-loss, Multi-path and Multi-level Neural Networks for speech recognition]
+* https://arxiv.org/abs/1506.04701[Multi-path Convolutional Neural Networks for Complex Image Classification]
+
+== 30.08.2023
+
+Find out:
+* how guitarset is translated into pytorch and back
+
+IN:
+
+Is data presented in decibels, or is it scaled in decibels in 0-1 range? Yes, audio amplitude is presented in 0-1 range in logarythmic scale. Look at the `decibels` parameter of *HCQT* and *FeatureModule*.
+Each hop (of 512 samples) of HCQT is represented with 144 bins = 4 octaves * 12 semitones * 3 per each semitone, the shape of input features is [6, 144, :]. 6 is for 6 channels of CQT. Number of frames tells how many times the size of 512 samples fits in the given data. According to the paper it's 9 frames at a time, 9*512 = 4608 samples ~ 10ms. Isn't 10ms too much of a latency? 
+The number of 9 frames is set in the FreNet model class. Does it mean that the model will for each hop create a new piece of data of 9 frames, the current one and 9 previous frames? Look at `amt_tools.tools.framify_acitvations()`, I'm not sure exactly what happens there, YET. When leaving the `framify_activations()` the shape is `(1, 6, 144, hops, 9)` and at the end of `TabCNN.pre_proc()` the shape is `[1, hops, 6, 144, 9]` - much more easy to understand, 6 channels of 144 banks x 9 frames. The activations and reshaping happens in `TranscriptionModel.run_on_batch()`.
+
+The FretNet network returns a tensor of shape `[hops, 48, 36, 1]` and why? It does checkout, made my data shape study. is 48 related to 12 * 4 octaves? After passing through the tablature heads it's even less obvious:
+
+[source, python]
+----
+(Pdb) output['tablature'].shape
+torch.Size([1, :, 126])
+
+(Pdb) output['tablature_rel'].shape
+torch.Size([1, :, 120])
+----
+
+How does the `tablature_head` work?
+
+FretNet model uses a *Logistic Tabulature Estimator*, 
+
+* What is `dim_in`? It's the number of bins of the VQT!
+* Why is `feature_dim_int = feature_dim_in / 2`? What's the division for? It's telling the network the dimention of flattened features once they exit the CNNs. When this dimention is know up-front, the other parts of the network, like the `tablature_head` can be defined in the `__init__` function of the model.
+
+
+
+
+BACK: 
+
+offline inference is run by TranscriptionModel.run_on_batch(), where it's pre-processed, thrown into the model and post-processed. post-process is implemented by the `FretNet` class. TranscriptionModel inherits after `nn.Module`.
+
+* how is pitch represented by the pytorch model of FretNet?
+* why is the index in the GuitarSet annotations in range 0-6 and not 0-5?
+
+It seems that the `value.index` isn't related to the source string number. Each of the GuitarSet jams files contains a list of annotations, six annotation objects of namespace "pitch_contour", one "chords" and one "key_mode". The `pitch_contour` annotations contain a number in `annotation_metadata.data_source` and that more than likely is the string number, 0 for low string E, 5 for high string e.
+
+* what is a U-Net decoder? Could we talk about this part next time?
+
+* *stacked multipitch* format
+
+Means that the data is divided into format `[hops, 6, 44]`, where `hops` is the number of frames, `6` stands for the number of strings and `44` is the number of possible pitches in MIDI format. In this *stacked* format, every string has access to the same range of pitches. Per one frame only one pitch in the array of 44 is set to 1. All others are set to 0.
+
+* *StackedOffestsWrapper*
+
+returns offests based on the previously extracted stacked multipitch.
+
+* *StackedNoteTranscriber*
+
+returns unique pitches and their lengths in interval [start, stop] format. Pitches are in a dict with each string having a different key [0, 1, 2, 3, 4, 5]. The number of slices in the stack is related to the number of strings.
+
+* Why is relative multipitch delivered in a stacked multi pitch form? `[6, 44, hops]`? Why not just `[6, hops]`?
+
+== KNOWLEDGE?
+
+=== How does dilation translate to the filter size?
+
+https://github.com/webmachinelearning/webnn/issues/222[worth checking out]
+
+.effective filter size
+----
+effective filter size = filter size + (filter size - 1) * (dilations - 1)
+----
+
+.output size
+----
+output size = 1 + (input size - filter size + beginning padding + ending padding) / stride
+----
+
+=== How to get average precision of certain category
+
+.print all the presion values from a local directory
+[source, shell]
+----
+awk -v RS='' '/multi_pitch/' * | grep precision | awk '{printf($3"\n")}'
+----
+
+.calculate average precision from the local directory
+[source, shell]
+----
+awk -v RS='' '/multi_pitch/' * | grep precision | awk '{sum+=$3} END {print "AVG=",sum/NR}'
+----
+
+== Data augmentation strategies for neural network F0 Estimation
+
+Lauri's paper on audio pitch estimation + refernces on how to measure performacne
