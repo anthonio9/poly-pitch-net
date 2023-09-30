@@ -1,10 +1,12 @@
 # Author: Frank Cwitkowitz <fcwitkow@ur.rochester.edu>
 
 # My imports
-from amt_tools.models import TranscriptionModel, LogisticBank
+from amt_tools.models import TranscriptionModel
 from guitar_transcription_continuous.models import TabCNNLogisticContinuous
-from guitar_transcription_continuous.models import CBernoulliBank, L2LogisticBank
+from guitar_transcription_continuous.models import CBernoulliBank
 from .tablature_layers import CNNLogisticTablatureEstimator
+from .continuous_layers import CNNL2LogisticBank
+from .common import CNNLogisticBank
 
 import guitar_transcription_continuous.utils as utils
 
@@ -188,7 +190,7 @@ class FretNetCNN(TabCNNLogisticContinuous):
             # Create another output layer to estimate relative pitch deviation
             if self.cont_layer:
                 # Train continuous relative pitch layer with MSE loss
-                self.relative_layer = L2LogisticBank(features_dim_int, dim_out)
+                self.relative_layer = CNNL2LogisticBank(features_dim_int, dim_out)
             else:
                 # Train continuous relative pitch layer with Continuous Bernoulli loss
                 self.relative_layer = CBernoulliBank(features_dim_int, dim_out)
@@ -203,7 +205,7 @@ class FretNetCNN(TabCNNLogisticContinuous):
 
         if self.estimate_onsets:
             # Initialize an output layer for onset detection
-            self.onsets_layer = LogisticBank(features_dim_int, dim_out)
+            self.onsets_layer = CNNLogisticBank(features_dim_int, dim_out)
 
             # Initialize the onset detection head
             self.onsets_head = nn.Sequential(
