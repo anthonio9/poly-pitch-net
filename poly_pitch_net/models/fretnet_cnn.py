@@ -1,10 +1,10 @@
 # Author: Frank Cwitkowitz <fcwitkow@ur.rochester.edu>
 
 # My imports
-from guitar_transcription_inhibition.models import LogisticTablatureEstimator
 from amt_tools.models import TranscriptionModel, LogisticBank
-from .tabcnn_variants import TabCNNLogisticContinuous
-from .continuous_layers import CBernoulliBank, L2LogisticBank
+from guitar_transcription_continuous.models import TabCNNLogisticContinuous
+from guitar_transcription_continuous.models import CBernoulliBank, L2LogisticBank
+from .tablature_layers import CNNLogisticTablatureEstimator
 
 import guitar_transcription_continuous.utils as utils
 
@@ -145,17 +145,13 @@ class FretNetCNN(TabCNNLogisticContinuous):
         # shape [B, nf4*F/8, T]
 
         # could this be the tablature_head?
-        self.conv_final = nn.Sequential(
-            nn.Conv1d(nf4 * dim_in / rd1[0] / rd2[0] / rd3[0], 128, 1),
-            nn.BatchNorm1d(128),
-            nn.ReLU(),
-            nn.Conv1d(128, 128, 1),
-            nn.BatchNorm2d(nf4),
-            nn.ReLU(),
-            nn.Dropout(dpx),
-            nn.Unflatten(2, (6, 21))
-        )
-        
+        # self.conv_final = nn.Sequential(
+        #     nn.Conv1d(nf4 * dim_in / rd1[0] / rd2[0] / rd3[0], 126, 1),
+        #     nn.BatchNorm1d(126),
+        #     nn.ReLU(),
+        #     nn.Dropout(dpx),
+        #     nn.Unflatten(2, (6, 21))
+        # )
         # shape [B, 6, 21, T]
 
         def pooling_reduction(dim_in, times=1):
@@ -168,19 +164,21 @@ class FretNetCNN(TabCNNLogisticContinuous):
         features_dim_int = features_dim_in // 2
 
         # Initialize a logistic output layer for discrete tablature estimation
-        self.tablature_layer = LogisticTablatureEstimator(dim_in=features_dim_int,
-                                                          profile=profile,
-                                                          matrix_path=matrix_path,
-                                                          silence_activations=silence_activations,
-                                                          lmbda=lmbda,
-                                                          device=device)
+        self.tablature_layer = CNNLogisticTablatureEstimator(
+                dim_in=features_dim_int,
+                profile=profile,
+                matrix_path=matrix_path,
+                silence_activations=silence_activations,
+                lmbda=lmbda,
+                device=device)
 
         # Initialize the discrete tablature estimation head
         self.tablature_head = nn.Sequential(
-            nn.Linear(features_dim_in, features_dim_int),
+            nn.Conv1d(features_dim_in, features_dim_int, 1),
             nn.ReLU(),
             nn.Dropout(dpx),
             self.tablature_layer
+            # this returns 
         )
 
         # Determine output dimensionality when not explicitly modeling silence
@@ -197,7 +195,7 @@ class FretNetCNN(TabCNNLogisticContinuous):
 
             # Initialize the relative tablature estimation head
             self.relative_head = nn.Sequential(
-                nn.Linear(features_dim_in, features_dim_int),
+                nn.Conv1d(features_dim_in, features_dim_int, 1),
                 nn.ReLU(),
                 nn.Dropout(dpx),
                 self.relative_layer
@@ -209,7 +207,7 @@ class FretNetCNN(TabCNNLogisticContinuous):
 
             # Initialize the onset detection head
             self.onsets_head = nn.Sequential(
-                nn.Linear(features_dim_in, features_dim_int),
+                nn.Conv1d(features_dim_in, features_dim_int, 1),
                 nn.ReLU(),
                 nn.Dropout(dpx),
                 self.onsets_layer
