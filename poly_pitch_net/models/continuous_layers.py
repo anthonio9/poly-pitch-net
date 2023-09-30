@@ -1,4 +1,4 @@
-from guitar_transcription_continuous import L2LogisticBank
+from guitar_transcription_continuous.models import L2LogisticBank
 import torch as nn
 
 

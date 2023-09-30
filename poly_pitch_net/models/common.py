@@ -1,4 +1,4 @@
-from amt_tools.models import TranscriptionModel, LogisticBank
+from amt_tools.models import LogisticBank
 from torch import nn
 
 
