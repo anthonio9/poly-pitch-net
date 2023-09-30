@@ -1,0 +1,12 @@
+= Poly Pitch Net
+
+== Install python packages
+
+----
+pip install amt-tools
+# install guitar-transcription-continuous
+pip install git+https://github.com/cwitkowitz/guitar-transcription-continuous.git@d481054f54184374c04b1cc27a487dc35c87f353
+# install guitar-transcription-inhibition
+pip install git+https://github.com/cwitkowitz/guitar-transcription-with-inhibition.git@e611c1dc9b7340d35c9a697d1658b3b2afb3978a
+----
+
