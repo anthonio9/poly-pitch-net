@@ -93,7 +93,7 @@ def config():
 
     # Switch to select type of continuous output layer for relative pitch prediction
     # (0 - Continuous Bernoulli | 1 - MSE | None - disable relative pitch prediction)
-    cont_layer = 0
+    cont_layer = 1
 
     # Multiplier for inhibition loss if applicable
     lmbda = 10

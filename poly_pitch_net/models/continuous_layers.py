@@ -1,5 +1,5 @@
 from guitar_transcription_continuous.models import L2LogisticBank
-import torch as nn
+import torch.nn as nn
 
 
 class CNNL2LogisticBank(L2LogisticBank):
@@ -15,5 +15,5 @@ class CNNL2LogisticBank(L2LogisticBank):
         ----------
         See LogisticBank class...
         """
-        super().__init__(dim_in, dim_out, None)
+        super().__init__(dim_in, dim_out)
         self.output_layer = nn.Conv1d(dim_in, dim_out, 1)

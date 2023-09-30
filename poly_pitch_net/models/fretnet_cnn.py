@@ -161,7 +161,7 @@ class FretNetCNN(TabCNNLogisticContinuous):
             return dim_in if times <= 0 else pooling_reduction(math.ceil(dim_in / 2), times - 1)
 
         # Compute the dimensionality of feature embeddings
-        features_dim_in = nf3 * pooling_reduction(dim_in, times=2)
+        features_dim_in = nf4 * pooling_reduction(dim_in, times=3)
         # Reduce the dimensionality by half before feeding to output layers
         features_dim_int = features_dim_in // 2
 
@@ -259,13 +259,16 @@ class FretNetCNN(TabCNNLogisticContinuous):
         # print(f"conv3 shape: {embeddings.shape}")
 
         embeddings = self.pool2(embeddings)
+        embeddings = self.conv4(embeddings)
+
+        embeddings = self.pool3(embeddings)
 
         # Flatten spatial features into one embedding
-        embeddings = embeddings.flatten(1)
+        #embeddings = embeddings.flatten(1)
         # Size of the embedding
-        embedding_size = embeddings.size(-1)
+        #embedding_size = embeddings.size(-1)
         # Restore proper batch dimension, unsqueezing sequence-frame axis
-        embeddings = embeddings.view(batch_size, -1, embedding_size)
+        #embeddings = embeddings.view(batch_size, -1, embedding_size)
 
         # Process embeddings with discrete tablature head
         output[tools.KEY_TABLATURE] = self.tablature_head(embeddings).pop(tools.KEY_TABLATURE)
