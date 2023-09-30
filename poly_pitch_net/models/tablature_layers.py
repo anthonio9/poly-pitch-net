@@ -26,7 +26,10 @@ class CNNLogisticTablatureEstimator(LogisticTablatureEstimator):
           Multiplier for the inhibition loss
         """
 
-        super().__init__(dim_in, profile, device)
+        super().__init__(dim_in, profile, 
+                         matrix_path=matrix_path, 
+                         silence_activations=silence_activations,
+                         lmbda=lmbda, device=device)
 
         self.silence_activations = silence_activations
         self.lmbda = lmbda

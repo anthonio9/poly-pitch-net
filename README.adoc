@@ -2,6 +2,7 @@
 
 == Install python packages
 
+[source, shell]
 ----
 pip install amt-tools
 # install guitar-transcription-continuous
