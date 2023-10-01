@@ -57,7 +57,6 @@ class FretNetCNN(TabCNNLogisticContinuous):
         nf2 = 32 * model_complexity
         nf3 = 48 * model_complexity
         nf4 = 64 * model_complexity
-        nf5 = 64 * model_complexity
 
         # Kernel size for each convolutional block
         ks1 = (3, 3)
