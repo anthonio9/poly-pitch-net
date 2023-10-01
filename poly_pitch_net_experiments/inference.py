@@ -79,7 +79,7 @@ data_proc = HCQT(sample_rate=sample_rate,
 # Build the path to GuitarSet
 gset_base_dir = os.path.join(str(getconfig.git_root_path), '..', 'Datasets', 'GuitarSet')
 gset_cache = os.path.join(str(getconfig.git_root_path), '..', 'generated', 'data')
-gset_cache_val = os.path.join(gset_cache, 'val') # Includes extras
+gset_cache_inf = os.path.join(gset_cache, 'inference') # Includes extras
 
 # Whether to perform data augmentation (pitch shifting) during training
 augment_data = False
@@ -102,23 +102,23 @@ use_cluster_grouping = True
 use_adjusted_targets = True
 
 # Create a dataset corresponding to the training partition
-gset_val = GuitarSet(base_dir=gset_base_dir,
+gset_inf = GuitarSet(base_dir=gset_base_dir,
                        hop_length=hop_length,
                        sample_rate=sample_rate,
                        data_proc=data_proc,
                        profile=profile,
-                       reset_data=True,
-                       save_loc=gset_cache_val,
+                       store_data=True,
+                       save_loc=gset_cache_inf,
                        semitone_radius=semitone_radius,
                        rotarize_deviations=rotarize_deviations,
                        augment=augment_data,
                        silence_activations=silence_activations,
                        use_cluster_grouping=use_cluster_grouping,
                        use_adjusted_targets=use_adjusted_targets,
-                       evaluation_extras=False)
+                       evaluation_extras=True)
 
-ground_truth = gset_val.load(Path(audio_path).stem)
-breakpoint()
+track_path = Path(audio_path).stem.replace("_mic", "")
+ground_truth = gset_inf.load(track_path)
 
 # Compute the features
 features = {tools.KEY_FEATS: data_proc.process_audio(audio),
@@ -159,7 +159,7 @@ stacked_pitch_list = tools.stacked_pitch_list_to_hz(
 #                                         hertz=True)
 fig_est = visualize.plot_stacked_pitch_list_with_spectrogram(
         audio=audio,
-        features=features,
+        ground_truth=ground_truth,
         sample_rate=sample_rate,
         hop_length=hop_length,
         stacked_pitch_list=stacked_pitch_list, 
