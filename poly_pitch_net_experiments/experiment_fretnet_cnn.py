@@ -316,7 +316,7 @@ def fretnet_cross_val(sample_rate, hop_length, num_frames, iterations, checkpoin
                                  cont_layer=cont_layer,
                                  estimate_onsets=estimate_onsets,
                                  device=gpu_id,
-                                 frames=9)
+                                 frames=1)
             fretnet.change_device()
             fretnet.train()
 
@@ -367,10 +367,10 @@ def fretnet_cross_val(sample_rate, hop_length, num_frames, iterations, checkpoin
     finally:
         # Wait 1 minute to avoid zipping before files finish updating
         print('Waiting 1 minute to allow files to finish updating...')
-        print('WARNING: NOTHING IS BEING SAVED')
+        # print('WARNING: NOTHING IS BEING SAVED')
         # Pause execution for 1 minute
-        # time.sleep(60)
+        time.sleep(60)
         # Construct a path to save all generated materials
-        # zip_path = os.path.join(os.path.dirname(root_dir), EX_NAME + '.zip')
+        zip_path = os.path.join(os.path.dirname(root_dir), EX_NAME + '.zip')
         # Save all experiment files as a single .zip file
-        # tools.zip_and_save(root_dir, zip_path)
+        tools.zip_and_save(root_dir, zip_path)

@@ -141,7 +141,7 @@ class FretNetCNN(TabCNNLogisticContinuous):
         self.pool3 = nn.Sequential(
             nn.MaxPool2d(rd3),
             nn.Dropout(dpx),
-            nn.Flatten(start_dim=1, end_dim=2)
+            # nn.Flatten(start_dim=1, end_dim=2)
         )
         # shape [B, nf4*F/8, T]
 
@@ -161,8 +161,10 @@ class FretNetCNN(TabCNNLogisticContinuous):
 
         # Compute the dimensionality of feature embeddings
         features_dim_in = nf4 * pooling_reduction(dim_in, times=3)
+        print(f"features_dim_in: {features_dim_in}")
         # Reduce the dimensionality by half before feeding to output layers
         features_dim_int = features_dim_in // 2
+        print(f"features_dim_int: {features_dim_int}")
 
         # Initialize a logistic output layer for discrete tablature estimation
         self.tablature_layer = CNNLogisticTablatureEstimator(
@@ -183,16 +185,17 @@ class FretNetCNN(TabCNNLogisticContinuous):
         )
 
         # Determine output dimensionality when not explicitly modeling silence
-        dim_out = self.profile.get_num_dofs() * self.profile.num_pitches
+        self.dim_out = self.profile.get_num_dofs() * self.profile.num_pitches
+        self.dim_out_plus = self.profile.get_num_dofs() * (self.profile.num_pitches + 1)
 
         if self.cont_layer is not None:
             # Create another output layer to estimate relative pitch deviation
             if self.cont_layer:
                 # Train continuous relative pitch layer with MSE loss
-                self.relative_layer = CNNL2LogisticBank(features_dim_int, dim_out)
+                self.relative_layer = CNNL2LogisticBank(features_dim_int, self.dim_out)
             else:
                 # Train continuous relative pitch layer with Continuous Bernoulli loss
-                self.relative_layer = CBernoulliBank(features_dim_int, dim_out)
+                self.relative_layer = CBernoulliBank(features_dim_int, self.dim_out)
 
             # Initialize the relative tablature estimation head
             self.relative_head = nn.Sequential(
@@ -204,7 +207,7 @@ class FretNetCNN(TabCNNLogisticContinuous):
 
         if self.estimate_onsets:
             # Initialize an output layer for onset detection
-            self.onsets_layer = CNNLogisticBank(features_dim_int, dim_out)
+            self.onsets_layer = CNNLogisticBank(features_dim_int, self.dim_out)
 
             # Initialize the onset detection head
             self.onsets_head = nn.Sequential(
@@ -244,43 +247,48 @@ class FretNetCNN(TabCNNLogisticContinuous):
         batch_size = feats.size(0)
 
         # Collapse the sequence-frame axis into the batch axis as in TabCNN implementation
-        feats = feats.reshape(-1, self.in_channels, self.dim_in, self.frame_width)
+        # feats = feats.reshape(-1, self.in_channels, self.dim_in, self.frame_width)
+        # input shape is [B, T, C, F, 1], change it to [B, C, F, T]
+        feats = feats.reshape(batch_size, self.in_channels, self.dim_in, -1)
 
         # Obtain the feature embeddings from the model
         embeddings = self.conv1(feats)
-        # print(f"conv1 shape: {embeddings.shape}")
+        # shape [B, nf1, F, T]
 
         embeddings = self.conv2(embeddings)
-        # print(f"conv2 shape: {embeddings.shape}")
+        # shape [B, nf2, F, T]
 
         embeddings = self.pool1(embeddings)
+        # shape [B, nf2, F/2, T]
+
         embeddings = self.conv3(embeddings)
-        # print(f"conv3 shape: {embeddings.shape}")
+        # shape [B, nf3, F/2, T]
 
         embeddings = self.pool2(embeddings)
+        # shape [B, nf3, F/4, T]
+
         embeddings = self.conv4(embeddings)
+        # shape [B, nf4, F/4, T]
 
         embeddings = self.pool3(embeddings)
+        # shape [B, nf4, F/8, T]
 
-        # Flatten spatial features into one embedding
-        #embeddings = embeddings.flatten(1)
-        # Size of the embedding
-        #embedding_size = embeddings.size(-1)
-        # Restore proper batch dimension, unsqueezing sequence-frame axis
-        #embeddings = embeddings.view(batch_size, -1, embedding_size)
+        embeddings = embeddings.flatten(start_dim=1, end_dim=2)
+        # shape [B, nf4*F/8, T]
 
         # Process embeddings with discrete tablature head
-        output[tools.KEY_TABLATURE] = self.tablature_head(embeddings).pop(tools.KEY_TABLATURE)
+        output[tools.KEY_TABLATURE] = self.tablature_head(embeddings).pop(tools.KEY_TABLATURE).reshape(batch_size, -1, self.dim_out_plus)
 
         if self.cont_layer is not None:
             # Process embeddings with relative tablature head
-            output[utils.KEY_TABLATURE_REL] = self.relative_head(embeddings)
+            output[utils.KEY_TABLATURE_REL] = self.relative_head(embeddings).reshape(batch_size, -1, self.dim_out)
 
         if self.estimate_onsets:
             # Process embeddings with onsets head
-            output[tools.KEY_ONSETS] = self.onsets_head(embeddings)
+            output[tools.KEY_ONSETS] = self.onsets_head(embeddings).reshape(batch_size, -1, self.dim_out)
 
         return output
+
 
     def post_proc(self, batch):
         """
