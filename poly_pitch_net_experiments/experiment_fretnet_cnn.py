@@ -55,7 +55,7 @@ def config():
     hop_length = 512
 
     # Number of consecutive frames within each example fed to the model
-    num_frames = 5
+    num_frames = 200
 
     # Number of training iterations to conduct
     iterations = 2500
@@ -64,7 +64,7 @@ def config():
     checkpoints = 25
 
     # Number of samples to gather for a batch
-    batch_size = 5 
+    batch_size = 30
 
     # The fixed or initial learning rate
     learning_rate = 5E-4
@@ -291,7 +291,7 @@ def fretnet_cross_val(sample_rate, hop_length, num_frames, iterations, checkpoin
                                      num_frames=None,
                                      data_proc=data_proc,
                                      profile=profile,
-                                     reset_data=True,
+                                     store_data=True,
                                      save_loc=gset_cache_val,
                                      semitone_radius=semitone_radius,
                                      rotarize_deviations=rotarize_deviations,
