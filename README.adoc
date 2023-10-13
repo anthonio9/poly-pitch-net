@@ -2,6 +2,13 @@
 
 == Install python packages
 
+.setup python venv
+[source, shell]
+----
+python3.10 -m venv venv
+source venv/bin/activate
+----
+
 [source, shell]
 ----
 pip install amt-tools
@@ -22,4 +29,27 @@ If any errors related to missing dictionary keys occur, make sure that the `rese
 [source, shell]
 ----
 python3 poly_pitch_net_experiments/experiment_fretnet_cnn.py
+----
+
+== Tests
+
+Pytest is the framework of our choice. 
+
+[source, shell]
+----
+pip install pytest
+----
+
+To run the tests, first, install the `poly_pitch_net` package as a developement package, run below in the root of the `poly-pitch-net` git project directory.
+
+[source, shell]
+----
+pip install -e .
+----
+
+Finally, run the tests
+
+[source, shell]
+----
+pytest -v
 ----
