@@ -135,6 +135,21 @@ class FretNetCrepe(nn.Module):
             nn.Dropout(dpx),
         )
 
+    @classmethod
+    def model_name(cls):
+        """
+        Retrieve an appropriate tag, the class name, for the model.
+
+        Returns
+        ----------
+        tag : str
+          Name of the child class calling the function
+        """
+
+        tag = cls.__name__
+
+        return tag
+
     def forward(self, feats):
         """
         Perform the main processing steps for FretNet.
@@ -151,11 +166,12 @@ class FretNetCrepe(nn.Module):
 
         Returns
         ----------
-        output : dict w/ tablature/relative and potentially onsets Tensors (all B x T x O)
-          Dictionary containing continuous tablature output
+        output : dict with pitch and (all B x T x O)
+          Dictionary containing continuous pitch output
           B - batch size,
-          T - number of time steps (frames),
+          C - number of channels
           O - number of output neurons (dim_out)
+          T - number of time steps (frames),
         """
 
         # Initialize an empty dictionary to hold output
@@ -197,30 +213,41 @@ class FretNetCrepe(nn.Module):
         embeddings = self.pitch_head(embeddings)
         # shape [B, 6*no_pitch_bins, T]
 
-        output = embeddings.unflatten(dim=1, sizes=(6, self.no_pitch_bins))
+        output[tools.KEY_MULTIPITCH] = embeddings.unflatten(dim=1, sizes=(6, self.no_pitch_bins))
         # shape [B, 6, no_pitch_bins, T]
 
         return output
 
-
-    def post_proc(self, batch):
+    def post_proc(self, output):
         """
-        Calculate onsets loss and finalize onset predictions.
+        Calculate final weight averaged pitch value
 
         Parameters
         ----------
-        batch : dict
-          Dictionary including model output and potentially
-          ground-truth for a group of tracks
+        output : dict
+          Dictionary including model output and time vector.
+          "pitch"
+          B - batch size,
+          C - number of channels,
+          O - number of output neurons (dim_out),
+          T - number of time steps (frames)
+
+          "time"
+          B - batch size,
+          T - number of time steps (frames)
+
 
         Returns
         ----------
-        output : dict
-          Dictionary containing tablature, relative deviation, and potentially onsets/loss
+        output : list of tuples
+          List containing time / pitch bindings.
         """
 
-        # Call the post-processing method of the parent
-        output = super().post_proc(batch)
+        # get argmax from each 360-vector
+        centers = output[tools.KEY_MULTIPITCH].argmax(dim=-1)
+
+        # do [center - 4, center + 4] averaging
+        output = centers
 
         return output
 
