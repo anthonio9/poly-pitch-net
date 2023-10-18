@@ -1,5 +1,6 @@
 import amt_tools.tools as tools
 from poly_pitch_net.models import FretNetCrepe
+from poly_pitch_net.tools import key_names
 
 import pytest
 import torch
@@ -24,6 +25,7 @@ def generate_dummy_batch(B, T, C, F, W):
     batch : a PyTorch tensor of size [B x T x C x F x W] with random values.
     """
     return torch.rand(size=(B, T, C, F, W))
+
 
 @pytest.fixture(scope="session")
 def fretnet():
@@ -52,7 +54,7 @@ def test_fretnet_crepe_forward_shape(fretnet):
                                        C=hcqt_channels,
                                        F=freq_bins, W=1)
 
-    output = fretnet.forward(dummy_batch)[tools.KEY_MULTIPITCH]
+    output = fretnet.forward(dummy_batch)[key_names.KEY_PITCH_LAYER]
 
     expected_shape = [batch_size,
                       no_strings,
@@ -73,12 +75,18 @@ def test_fretnet_post_proc(fretnet):
                          size=(batch_size, no_strings, no_frames))
 
     # prepare a 1-hot vector batch, shape [B, C, O, T]
-    vals_1hot = nn.functional.one_hot(vals)
-    output = {}
-    output[tools.KEY_MULTIPITCH] = vals_1hot
+    vals_1hot = nn.functional.one_hot(vals, num_classes=no_pitch_bins)
+    vals_1hot = vals_1hot.reshape(batch_size, no_strings, no_pitch_bins, -1)
 
-    test = fretnet.post_proc(output)
+    input = {}
+    input[key_names.KEY_PITCH_LAYER] = vals_1hot
 
-    assert vals.shape == test.shape
-    assert torch.equal(vals, test)
+    # create the pitch_names array
+    pitch_names = torch.arange(0, no_pitch_bins)
+    pitch_names = pitch_names.expand(batch_size, no_strings,
+                                     no_frames, -1)
 
+    output = fretnet.post_proc(input, pitch_names=pitch_names)
+
+    assert vals.shape == output[key_names.KEY_PITCH_CENTERS].shape
+    assert torch.equal(vals, output[key_names.KEY_PITCH_CENTERS].shape)

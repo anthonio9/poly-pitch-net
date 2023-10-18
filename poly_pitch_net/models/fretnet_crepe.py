@@ -3,9 +3,11 @@
 # My imports
 import guitar_transcription_continuous.utils as utils
 import amt_tools.tools as tools
+from poly_pitch_net.tools import key_names
 
 # Regular imports
 from torch import nn
+import torch
 import math
 
 
@@ -213,12 +215,13 @@ class FretNetCrepe(nn.Module):
         embeddings = self.pitch_head(embeddings)
         # shape [B, 6*no_pitch_bins, T]
 
-        output[tools.KEY_MULTIPITCH] = embeddings.unflatten(dim=1, sizes=(6, self.no_pitch_bins))
+        output[key_names.KEY_PITCH_LAYER] = embeddings.unflatten(
+                dim=1, sizes=(6, self.no_pitch_bins))
         # shape [B, 6, no_pitch_bins, T]
 
         return output
 
-    def post_proc(self, output):
+    def post_proc(self, output, pitch_names):
         """
         Calculate final weight averaged pitch value
 
@@ -242,12 +245,42 @@ class FretNetCrepe(nn.Module):
         output : list of tuples
           List containing time / pitch bindings.
         """
+        offset = 4
+        multi_pitch = output[key_names.KEY_PITCH_LAYER]
+        multi_pitch = multi_pitch.reshape(shape=(
+            multi_pitch.shape[0],
+            multi_pitch.shape[1],
+            multi_pitch.shape[-1],
+            multi_pitch.shape[2]
+            ))
+
+        pitch_names = pitch_names.reshape(shape=multi_pitch.shape)
+
+        # inxed tensor for multi_pitch 
+        indxs = torch.arange(0, self.no_pitch_bins).to(torch.long)
+        indxs = indxs.expand(multi_pitch.shape)
 
         # get argmax from each 360-vector
-        centers = output[tools.KEY_MULTIPITCH].argmax(dim=-1)
+        centers = multi_pitch.argmax(dim=-1).to(torch.long)
+        centers = centers.unsqueeze(-1)
+        output[key_names.KEY_PITCH_CENTERS] = centers
 
-        # do [center - 4, center + 4] averaging
-        output = centers
+        # weighted average: just the centers
+        breakpoint()
+        wg_avg = multi_pitch[indxs == centers] * pitch_names[indxs == centers]
+
+        # weighted average: for offset in range [-4, -1], [1, 4]
+        for off in range(1, offset):
+            # left side of the offset range centers
+            l_centers = centers[centers - off >= 0] - off
+            wg_avg += multi_pitch[indxs == l_centers] \
+                * pitch_names[indxs == l_centers]
+
+            # right side of the offset range centers
+            r_centers = centers[centers + off >= self.no_pitch_bins] + off
+            wg_avg += multi_pitch[indxs == r_centers] \
+                * pitch_names[indxs == r_centers]
+
+        output[key_names.KEY_PITCH_WG_AVG] = wg_avg
 
         return output
-
