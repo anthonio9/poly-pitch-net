@@ -256,30 +256,39 @@ class FretNetCrepe(nn.Module):
 
         pitch_names = pitch_names.reshape(shape=multi_pitch.shape)
 
-        # inxed tensor for multi_pitch 
-        indxs = torch.arange(0, self.no_pitch_bins).to(torch.long)
-        indxs = indxs.expand(multi_pitch.shape)
-
         # get argmax from each 360-vector
         centers = multi_pitch.argmax(dim=-1).to(torch.long)
         centers = centers.unsqueeze(-1)
-        output[key_names.KEY_PITCH_CENTERS] = centers
+        output[key_names.KEY_PITCH_CENTERS] = centers.squeeze(dim=-1)
 
         # weighted average: just the centers
-        breakpoint()
-        wg_avg = multi_pitch[indxs == centers] * pitch_names[indxs == centers]
+        wg_avg = multi_pitch.gather(3, centers) * pitch_names.gather(3, centers)
 
         # weighted average: for offset in range [-4, -1], [1, 4]
         for off in range(1, offset):
             # left side of the offset range centers
-            l_centers = centers[centers - off >= 0] - off
-            wg_avg += multi_pitch[indxs == l_centers] \
-                * pitch_names[indxs == l_centers]
+            l_centers = centers - off
+            l_multi_pitch = torch.where(
+                    l_centers >= 0,
+                    multi_pitch.gather(3, l_centers.where(l_centers >= 0, 0)),
+                    0)
+            l_pitch_names = torch.where(
+                    l_centers >= 0,
+                    pitch_names.gather(3, l_centers.where(l_centers >= 0, 0)),
+                    0)
+            wg_avg += l_multi_pitch * l_pitch_names
 
             # right side of the offset range centers
-            r_centers = centers[centers + off >= self.no_pitch_bins] + off
-            wg_avg += multi_pitch[indxs == r_centers] \
-                * pitch_names[indxs == r_centers]
+            r_centers = centers + off
+            r_multi_pitch = torch.where(
+                    r_centers < self.no_pitch_bins,
+                    multi_pitch.gather(3, r_centers.where(r_centers < self.no_pitch_bins, 0)),
+                    0)
+            r_pitch_names = torch.where(
+                    r_centers < self.no_pitch_bins,
+                    pitch_names.gather(3, r_centers.where(r_centers < self.no_pitch_bins, 0)),
+                    0)
+            wg_avg += r_multi_pitch * r_pitch_names
 
         output[key_names.KEY_PITCH_WG_AVG] = wg_avg
 

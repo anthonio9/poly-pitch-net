@@ -89,4 +89,4 @@ def test_fretnet_post_proc(fretnet):
     output = fretnet.post_proc(input, pitch_names=pitch_names)
 
     assert vals.shape == output[key_names.KEY_PITCH_CENTERS].shape
-    assert torch.equal(vals, output[key_names.KEY_PITCH_CENTERS].shape)
+    assert torch.equal(vals, output[key_names.KEY_PITCH_CENTERS])
