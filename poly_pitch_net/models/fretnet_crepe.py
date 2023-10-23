@@ -18,7 +18,8 @@ class FretNetCrepe(nn.Module):
     """
 
     def __init__(self, dim_in, in_channels, model_complexity=1,
-                 matrix_path=None, device='cpu', frames=1, no_pitch_bins=360):
+                 matrix_path=None, device='cpu', frames=1,
+                 no_strings=6, no_pitch_bins=360):
         """
         Initialize all components of the model.
 
@@ -36,6 +37,7 @@ class FretNetCrepe(nn.Module):
         self.no_pitch_bins = no_pitch_bins
         self.in_channels = in_channels
         self.dim_in = dim_in
+        self.no_strings = no_strings
 
         # Initialize a flag to check whether to pad input features
         self.online = False
@@ -133,7 +135,7 @@ class FretNetCrepe(nn.Module):
         )
 
         self.pitch_head = nn.Sequential(
-            nn.Conv1d(nf4 * (self.dim_in // rd1[0] // rd2[0] // rd3[0]), 6*360, 1),
+            nn.Conv1d(nf4 * (self.dim_in // rd1[0] // rd2[0] // rd3[0]), self.no_strings*self.no_pitch_bins, 1),
             nn.Dropout(dpx),
         )
 
@@ -244,6 +246,7 @@ class FretNetCrepe(nn.Module):
         ----------
         output : list of tuples
           List containing time / pitch bindings.
+          shape [B, C, T]
         """
         offset = 4
         multi_pitch = output[key_names.KEY_PITCH_LAYER]
