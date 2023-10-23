@@ -2,6 +2,13 @@
 
 == Install python packages
 
+.setup python venv
+[source, shell]
+----
+python3.10 -m venv venv
+source venv/bin/activate
+----
+
 [source, shell]
 ----
 pip install amt-tools
@@ -11,3 +18,38 @@ pip install git+https://github.com/cwitkowitz/guitar-transcription-continuous.gi
 pip install git+https://github.com/cwitkowitz/guitar-transcription-with-inhibition.git@e611c1dc9b7340d35c9a697d1658b3b2afb3978a
 ----
 
+== Experiments
+
+`poly_pitch_net_experiments` directory contains scripts with the implementation of training, inference and valuation of 
+the Poly Pitch Net models with the use of the GuitarSet dataset. When running the `experiment.py` script for the first time, 
+make sure that the `../generated/` directory is empty - this is the _cache_ directory for all the validation and training sets.
+If any errors related to missing dictionary keys occur, make sure that the `reset_data` flag in the GuitarSet init calls is set to *True*.
+
+.run the training script
+[source, shell]
+----
+python3 poly_pitch_net_experiments/experiment_fretnet_cnn.py
+----
+
+== Tests
+
+Pytest is the framework of our choice. 
+
+[source, shell]
+----
+pip install pytest
+----
+
+To run the tests, first, install the `poly_pitch_net` package as a developement package, run below in the root of the `poly-pitch-net` git project directory.
+
+[source, shell]
+----
+pip install -e .
+----
+
+Finally, run the tests
+
+[source, shell]
+----
+pytest -v
+----
