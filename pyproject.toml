@@ -1,0 +1,11 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "poly_pitch_net"
+version = "0.01"
+requires-python = ">=3.10"
+
+[project.urls]
+"Homepage" = "https://github.com/anthonio9/poly-pitch-net"
