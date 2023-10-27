@@ -257,6 +257,7 @@ class FretNetCrepe(nn.Module):
             multi_pitch.shape[-1],
             multi_pitch.shape[2]
             ))
+        # multi_pitch.shape == [B, C, T, O]
 
         pitch_names = pitch_names.reshape(shape=multi_pitch.shape)
 
@@ -264,6 +265,7 @@ class FretNetCrepe(nn.Module):
         centers = multi_pitch.argmax(dim=-1).to(torch.long)
         centers = centers.unsqueeze(-1)
         output[key_names.KEY_PITCH_CENTERS] = centers.squeeze(dim=-1)
+        # centers.shape == [B, C, T]
 
         # weighted average: just the centers
         wg_avg = multi_pitch.gather(3, centers) * pitch_names.gather(3, centers)
