@@ -1,6 +1,7 @@
 import amt_tools.tools as tools
 from poly_pitch_net.models import FretNetCrepe
 from poly_pitch_net.tools import key_names
+import poly_pitch_net as ppn
 
 import pytest
 import torch
@@ -217,3 +218,14 @@ def test_fretnet_post_proc_pitch_weighted_average(fretnet, base_config):
 
     assert output_hat.shape == output[key_names.KEY_PITCH_WG_AVG].shape
     assert torch.equal(output_hat, output[key_names.KEY_PITCH_WG_AVG])
+
+
+def test_loss_small(fretnet_small, base_config_small):
+    bins, bins_1hot, pitch_names = gen_random_post_proc_tensors(base_config_small)
+
+    input = {}
+    input[key_names.KEY_PITCH_LAYER] = bins_1hot
+
+    output = fretnet_small.post_proc(input, pitch_names=pitch_names)
+    
+    loss = ppn.train.loss(output[key_names.KEY_PITCH_LAYER], bins, pitch_names)
