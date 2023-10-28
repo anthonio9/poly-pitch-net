@@ -12,6 +12,10 @@ def loss(logits, bins, pitch_names):
     logits - output from the FretNetCrepe.forward() function.
     Should be of shape [B, C, O, T]
 
+    bins - ground truth, values of the true pitch in semitones.
+
+    look here for more 
+    https://github.com/interactiveaudiolab/penn/blob/955656618bb71e1e2f040d1d134b8de834f51733/penn/train/core.py
     """
     # breakpoint()
     # reshape [B, C, O, T] ==> [B, C, T, O]
@@ -30,9 +34,6 @@ def loss(logits, bins, pitch_names):
     # Ensure values are on correct device (no-op if devices are the same)
     loss.cents = loss.cents.to(bins.device)
 
-    # look here for more 
-    # https://github.com/interactiveaudiolab/penn/blob/955656618bb71e1e2f040d1d134b8de834f51733/penn/train/core.py#L159 loss()
-
     # Create normal distributions
     distributions = torch.distributions.Normal(
             ppn.tools.convert.bins_to_cents(bins), 
@@ -43,7 +44,7 @@ def loss(logits, bins, pitch_names):
 
     # Normalize
     bins = bins / (bins.max(dim=1, keepdims=True).values + 1e-8)
-
+    
     # Compute binary cross-entropy loss
     return torch.nn.functional.binary_cross_entropy_with_logits(
         logits,
