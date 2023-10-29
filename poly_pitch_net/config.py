@@ -54,14 +54,18 @@ GSET_BASE_DIR = ppn.tools.misc.get_project_root().parent.parent / 'Datasets' / '
 GSET_CACHE = ppn.tools.misc.get_project_root().parent.parent / 'generated' / 'data'
 GSET_CACHE_TRAIN = GSET_CACHE / 'train'
 GSET_CACHE_VAL = GSET_CACHE / 'val'
+GSET_NO_PLAYERS = 6
+
+# HCQT data processor paramters
+HCQT_DIM_IN = 144
+HCQT_NO_HARMONICS = 6
 
 ###############################################################################
 # Training parameters
 ###############################################################################
 
-
 # Batch size
-BATCH_SIZE = 128
+BATCH_SIZE = 30
 
 # Whether to stop training when validation loss stops improving
 EARLY_STOPPING = False
@@ -79,7 +83,7 @@ LEARNING_RATE = 2e-4
 LOSS = 'categorical_cross_entropy'
 
 # Number of training steps
-STEPS = 250000
+STEPS = 2500
 
 # Number of frames used during training
 NUM_TRAINING_FRAMES = 1

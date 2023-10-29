@@ -38,6 +38,7 @@ class FretNetCrepe(nn.Module):
         self.in_channels = in_channels
         self.dim_in = dim_in
         self.no_strings = no_strings
+        self.device = device
 
         # Initialize a flag to check whether to pad input features
         self.online = False
@@ -299,3 +300,28 @@ class FretNetCrepe(nn.Module):
         output[key_names.KEY_PITCH_WG_AVG] = wg_avg
 
         return output
+
+    def change_device(self, device=None):
+        """
+        Change the device and load the model onto the new device.
+
+        Parameters
+        ----------
+        device : string, int or None, optional (default None)
+          Device to load model onto
+        """
+
+        if device is None:
+            # If the function is called without a device, use the current device
+            device = self.device
+
+        if isinstance(device, int):
+            # If device is an integer, assume device represents GPU number
+            device = torch.device(f'cuda:{device}'
+                                  if torch.cuda.is_available() else 'cpu')
+
+        # Change device field
+        self.device = device
+        # Load the transcription model onto the device
+        self.to(self.device)
+
