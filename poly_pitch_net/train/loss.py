@@ -36,7 +36,7 @@ def loss(logits, bins, pitch_names):
 
     # Create normal distributions
     distributions = torch.distributions.Normal(
-            ppn.tools.convert.bins_to_cents(bins), 
+            ppn.tools.convert.frequency_to_cents(bins), 
             25)
 
     # Sample normal distributions

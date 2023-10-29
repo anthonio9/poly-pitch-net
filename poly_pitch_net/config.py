@@ -60,6 +60,19 @@ GSET_NO_PLAYERS = 6
 HCQT_DIM_IN = 144
 HCQT_NO_HARMONICS = 6
 
+# Keys for the processed data
+KEY_FEATURES = 'features'
+KEY_AUDIO = 'audio'
+KEY_TIMES = 'times'
+KEY_TRACK = 'track'
+KEY_MULTIPITCH = 'multi_pitch'
+KEY_TABLATURE = 'tablature'
+KEY_TABLATURE_REL = 'tablature_rel'
+KEY_PITCHLIST = 'pitch_list'
+KEY_PITCH_WG_AVG = 'pitch_wg_average'
+KEY_PITCH_CENTERS = 'pitch_centers'
+KEY_PITCH_LAYER = 'pitch_layer'
+
 ###############################################################################
 # Training parameters
 ###############################################################################
@@ -96,3 +109,4 @@ RANDOM_SEED = 1234
 
 # Whether to only use voiced start frames
 VOICED_ONLY = False
+
