@@ -53,6 +53,7 @@ NO_STRINGS = 6
 GSET_BASE_DIR = ppn.tools.misc.get_project_root().parent.parent / 'Datasets' / 'GuitarSet'
 GSET_CACHE = ppn.tools.misc.get_project_root().parent.parent / 'generated' / 'data'
 GSET_CACHE_TRAIN = GSET_CACHE / 'train'
+GSET_CACHE_PYTEST = GSET_CACHE / 'pytest'
 GSET_CACHE_VAL = GSET_CACHE / 'val'
 GSET_NO_PLAYERS = 6
 
