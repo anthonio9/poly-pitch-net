@@ -1,9 +1,9 @@
 import poly_pitch_net as ppn
+import poly_pitch_net.datasets.guitarset as guitarset
 
 import amt_tools.tools
 from amt_tools.features import HCQT
 from tensorboardX import SummaryWriter
-from guitar_transcription_continuous.datasets import GuitarSetPlus as GuitarSet
 import torch
 from tqdm import tqdm
 import random
@@ -12,7 +12,7 @@ import librosa
 
 def run():
     EX_NAME = '_'.join([ppn.models.FretNetCrepe.model_name(),
-                        GuitarSet.dataset_name(),
+                        guitarset.GuitarSetPPN.dataset_name(),
                         HCQT.features_name()])
 
     # Create the root directory for the experiment files
@@ -26,34 +26,14 @@ def run():
     k = random.randrange(ppn.GSET_NO_PLAYERS)
 
     # Allocate training/testing splits
-    train_splits = GuitarSet.available_splits()
+    train_splits = guitarset.GuitarSet.available_splits()
     val_splits = [train_splits.pop(k), train_splits.pop(k-1)]
-
-    # Amount of semitones in each direction modeled for each note
-    semitone_radius = 1.0
-
-    # Flag to use rotarized pitch deviations for ground-truth
-    rotarize_deviations = False # set to false in GuitarSet init anyway
-
-    # Whether to perform data augmentation (pitch shifting) during training
-    augment_data = False # set to false in GuitarSet init anyway
-
-    # Flag to include an activation for silence in applicable output layers
-    silence_activations = True
-
-    # Whether to use cluster-based or ground-truth index-
-    # based method for grouping notes and pitch contours
-    use_cluster_grouping = True
-
-    # Whether to use discrete targets derived from
-    # pitch contours instead of notes for training
-    use_adjusted_targets = True
 
     # Create an HCQT feature extraction module comprising
     # the first five harmonics and a sub-harmonic, where each
     # harmonic transform spans 4 octaves w/ 3 bins per semitone
     data_proc = HCQT(sample_rate=ppn.SAMPLE_RATE,
-                     hop_length=ppn.HOPSIZE,
+                     hop_length=guitarset.GSET_HOP_LEN,
                      fmin=librosa.note_to_hz('E2'),
                      harmonics=[0.5, 1, 2, 3, 4, 5],
                      n_bins=144, bins_per_octave=36)
@@ -62,9 +42,8 @@ def run():
 
     print(f"Preparing the trian set in {ppn.GSET_CACHE_TRAIN}")
     # Create a dataset corresponding to the training partition
-    gset_train = GuitarSet(base_dir=ppn.GSET_BASE_DIR,
+    gset_train = guitarset.GuitarSetPPN(base_dir=ppn.GSET_BASE_DIR,
                            splits=train_splits,
-                           hop_length=ppn.HOPSIZE,
                            sample_rate=ppn.SAMPLE_RATE,
                            num_frames=ppn.NUM_FRAMES,
                            data_proc=data_proc,
@@ -72,13 +51,6 @@ def run():
                            reset_data=False, # set to true in the future trainings
                            save_data=True, # set to true in the future trainings
                            save_loc=ppn.GSET_CACHE_TRAIN,
-                           semitone_radius=semitone_radius,
-                           rotarize_deviations=rotarize_deviations,
-                           augment=augment_data,
-                           silence_activations=silence_activations,
-                           use_cluster_grouping=use_cluster_grouping,
-                           use_adjusted_targets=use_adjusted_targets,
-                           evaluation_extras=True,
                            seed=ppn.RANDOM_SEED)
 
     # Create a PyTorch data loader for the dataset
@@ -90,20 +62,14 @@ def run():
 
     print(f"Preparing the validation set in {ppn.GSET_CACHE_VAL}")
     # Create a dataset corresponding to the validation partition
-    gset_val = GuitarSet(base_dir=ppn.GSET_BASE_DIR,
+    gset_val = guitarset.GuitarSetPPN(base_dir=ppn.GSET_BASE_DIR,
                          splits=val_splits,
-                         hop_length=ppn.HOPSIZE,
                          sample_rate=ppn.SAMPLE_RATE,
                          num_frames=None,
                          data_proc=data_proc,
                          profile=profile,
                          store_data=True,
                          save_loc=ppn.GSET_CACHE_VAL,
-                         semitone_radius=semitone_radius,
-                         rotarize_deviations=rotarize_deviations,
-                         silence_activations=silence_activations,
-                         use_cluster_grouping=use_cluster_grouping,
-                         evaluation_extras=True,
                          seed=ppn.RANDOM_SEED + 1)
 
     model = ppn.models.FretNetCrepe(
