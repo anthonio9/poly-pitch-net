@@ -1,4 +1,5 @@
 import poly_pitch_net as ppn
+import torch
 
 
 def bins_to_cents(bins):

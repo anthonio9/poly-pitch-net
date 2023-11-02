@@ -32,7 +32,7 @@ def run():
     # Create an HCQT feature extraction module comprising
     # the first five harmonics and a sub-harmonic, where each
     # harmonic transform spans 4 octaves w/ 3 bins per semitone
-    data_proc = HCQT(sample_rate=ppn.SAMPLE_RATE,
+    data_proc = HCQT(sample_rate=guitarset.GSET_SAMPLE_RATE,
                      hop_length=guitarset.GSET_HOP_LEN,
                      fmin=librosa.note_to_hz('E2'),
                      harmonics=[0.5, 1, 2, 3, 4, 5],
@@ -44,7 +44,6 @@ def run():
     # Create a dataset corresponding to the training partition
     gset_train = guitarset.GuitarSetPPN(base_dir=ppn.GSET_BASE_DIR,
                            splits=train_splits,
-                           sample_rate=ppn.SAMPLE_RATE,
                            num_frames=ppn.NUM_FRAMES,
                            data_proc=data_proc,
                            profile=profile,
@@ -57,14 +56,12 @@ def run():
     train_loader = torch.utils.data.DataLoader(dataset=gset_train,
                               batch_size=ppn.BATCH_SIZE,
                               shuffle=True,
-                              num_workers=4 * int(augment_data),
                               drop_last=True)
 
     print(f"Preparing the validation set in {ppn.GSET_CACHE_VAL}")
     # Create a dataset corresponding to the validation partition
     gset_val = guitarset.GuitarSetPPN(base_dir=ppn.GSET_BASE_DIR,
                          splits=val_splits,
-                         sample_rate=ppn.SAMPLE_RATE,
                          num_frames=None,
                          data_proc=data_proc,
                          profile=profile,
@@ -78,7 +75,7 @@ def run():
             no_pitch_bins=ppn.PITCH_BINS
             )
 
-    model.change_device()
+    model.change_device(device=0)
     model.train()
 
     print("Starting the training")
@@ -108,18 +105,17 @@ def train(
             breakpoint()
             # Unpack batch
             features = batch[ppn.KEY_FEATURES]
-            tablature = batch[ppn.KEY_TABLATURE] # in hertz
-            tablature_rel = batch[ppn.KEY_TABLATURE_REL]
+            pitch_array = batch[guitarset.KEY_PITCH_ARRAY]
 
             # have to convert TABLATURE and TABLATURE_REL into KEY_PITCH
 
             with torch.autocast(model.device.type):
 
                 # Forward pass
-                logits = model(audio.to(model.device))
+                logits = model(features.to(model.device))
 
                 # Compute losses
-                losses = ppn.train.loss(logits, bins.to(model.device))
+                losses = ppn.train.loss(logits, pitch_array.to(model.device))
 
             optimizer.zero_grad()
 
@@ -131,7 +127,6 @@ def train(
 
             # Update gradient scaler
             scaler.update()
-
 
 
 def evaluate():
