@@ -8,14 +8,7 @@ import os
 from copy import deepcopy
 
 import poly_pitch_net as ppn
-
-
-GSET_SAMPLE_RATE = 44100
-GSET_HOP_LEN = 256
-GSET_TIME_STEP = GSET_HOP_LEN / GSET_SAMPLE_RATE
-GSET_PLAYERS = 6
-
-KEY_PITCH_ARRAY = 'pitch_array'
+import poly_pitch_net.tools.key_names as key_names
 
 
 class GuitarSetPPN(GuitarSet):
@@ -48,8 +41,8 @@ class GuitarSetPPN(GuitarSet):
 
         # Update the argument in the collection
         kwargs.update({'base_dir' : base_dir})
-        kwargs.update({'hop_length' : GSET_HOP_LEN})
-        kwargs.update({'sample_rate' : GSET_SAMPLE_RATE})
+        kwargs.update({'hop_length' : key_names.GSET_HOP_LEN})
+        kwargs.update({'sample_rate' : key_names.GSET_SAMPLE_RATE})
 
         super().__init__(**kwargs)
 
@@ -133,7 +126,7 @@ class GuitarSetPPN(GuitarSet):
             data.update({
                 tools.KEY_FS : fs,
                 tools.KEY_AUDIO : audio,
-                KEY_PITCH_ARRAY : pitch_array,
+                key_names.KEY_PITCH_ARRAY : pitch_array,
                 tools.KEY_TIMES : times_array
                 })
 
@@ -145,7 +138,7 @@ class GuitarSetPPN(GuitarSet):
                 data_to_save = deepcopy(data)
 
                 # Package the stacked pitch list into save-friendly format
-                data_to_save.update({KEY_PITCH_ARRAY : pitch_array})
+                data_to_save.update({key_names.KEY_PITCH_ARRAY : pitch_array})
 
                 data_to_save.update({tools.KEY_TIMES : times_array})
 
@@ -218,15 +211,15 @@ class GuitarSetPPN(GuitarSet):
                 entry_times, slice_pitch_list = tools.utils.time_series_to_uniform(
                         times=entry_times,
                         values=slice_pitch_list,
-                        hop_length=GSET_TIME_STEP,
+                        hop_length=key_names.GSET_TIME_STEP,
                         duration=jam.file_metadata.duration)
 
             # Add the pitch list to the stacked pitch list dictionary under the slice key
             stacked_pitch_list.update(tools.utils.pitch_list_to_stacked_pitch_list(entry_times, slice_pitch_list, string))
 
         # Determine the total number of observations in the uniform time series
-        num_entries = int(np.ceil(jam.file_metadata.duration / GSET_TIME_STEP)) + 1
-        time_steps_array = GSET_TIME_STEP * np.arange(num_entries)
+        num_entries = int(np.ceil(jam.file_metadata.duration / key_names.GSET_TIME_STEP)) + 1
+        time_steps_array = key_names.GSET_TIME_STEP * np.arange(num_entries)
 
         pitch_array_slices_list = []
 

@@ -8,6 +8,7 @@ import torch
 from tqdm import tqdm
 import random
 import librosa
+import torchutil
 
 
 def run():
@@ -83,7 +84,7 @@ def run():
 
 def train(
         train_loader,
-        val_dataset,
+        val_loader,
         model,
         log_dir):
 
@@ -95,19 +96,16 @@ def train(
 
     # Automatic mixed precision (amp) gradient scaler
     scaler = torch.cuda.amp.GradScaler()
+    step, epoch = 0, 0
 
     for iter in tqdm(range(ppn.STEPS)):
         # Loop through the dataset
         for batch in train_loader:
-            # Zero the accumulated gradients
-            optimizer.zero_grad()
 
             breakpoint()
             # Unpack batch
-            features = batch[ppn.KEY_FEATURES]
-            pitch_array = batch[guitarset.KEY_PITCH_ARRAY]
-
-            # have to convert TABLATURE and TABLATURE_REL into KEY_PITCH
+            features = batch[key_names.KEY_FEATURES]
+            pitch_array = batch[key_names.KEY_PITCH_ARRAY]
 
             with torch.autocast(model.device.type):
 
@@ -117,10 +115,14 @@ def train(
                 # Compute losses
                 losses = ppn.train.loss(logits, pitch_array.to(model.device))
 
+            # Zero the accumulated gradients
             optimizer.zero_grad()
 
             # Backward pass
             scaler.scale(losses).backward()
+
+            # log the loss
+            writer.add_scalar('train_loss ' + ppn.LOSS_BCE, losses)
 
             # Update weights
             scaler.step(optimizer)
@@ -128,9 +130,32 @@ def train(
             # Update gradient scaler
             scaler.update()
 
+            step += 1
 
-def evaluate():
-    pass
+        epoch += 1
+
+    # Save final model
+    torchutil.checkpoint.save(
+        log_dir / f'{step:08d}.pt',
+        model,
+        optimizer,
+        step=step,
+        epoch=epoch)
 
 
+def evaluate(
+        loader: torch.utils.data.DataLoader,
+        model: ppn.models.FretNetCrepe,
+        writer: SummaryWriter):
+    """
+    Perform model evaluation.
+    """
 
+    model.eval()
+
+    for batch in loader:
+        features = batch[key_names.KEY_FEATURES]
+        pitch_array = batch[key_names.KEY_PITCH_ARRAY]
+
+        # set the pitch names to something
+        model.post_proc(model(features), pitch_names=?)

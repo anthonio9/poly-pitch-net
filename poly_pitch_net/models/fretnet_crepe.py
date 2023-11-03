@@ -219,7 +219,7 @@ class FretNetCrepe(nn.Module):
         embeddings = self.pitch_head(embeddings)
         # shape [B, 6*no_pitch_bins, T]
 
-        output[key_names.KEY_PITCH_LAYER] = embeddings.unflatten(
+        output[key_names.KEY_PITCH_LOGITS] = embeddings.unflatten(
                 dim=1, sizes=(6, self.no_pitch_bins))
         # shape [B, 6, no_pitch_bins, T]
 
@@ -251,7 +251,7 @@ class FretNetCrepe(nn.Module):
           shape [B, C, T]
         """
         offset = 4
-        multi_pitch = output[key_names.KEY_PITCH_LAYER]
+        multi_pitch = output[key_names.KEY_PITCH_LOGITS]
         multi_pitch = multi_pitch.reshape(shape=(
             multi_pitch.shape[0],
             multi_pitch.shape[1],

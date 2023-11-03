@@ -96,6 +96,8 @@ LEARNING_RATE = 2e-4
 # Loss function
 LOSS = 'categorical_cross_entropy'
 
+LOSS_BCE = 'binary_cross_entropy_with_logits'
+
 # Number of training steps
 STEPS = 2500
 

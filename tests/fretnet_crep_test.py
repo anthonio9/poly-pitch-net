@@ -94,7 +94,7 @@ def test_fretnet_crepe_forward_shape(fretnet, base_config):
                                        C=base_config.hcqt_channels,
                                        F=base_config.freq_bins, W=1)
 
-    output = fretnet.forward(dummy_batch)[key_names.KEY_PITCH_LAYER]
+    output = fretnet.forward(dummy_batch)[key_names.KEY_PITCH_LOGITS]
 
     expected_shape = [base_config.batch_size,
                       base_config.no_strings,
@@ -134,7 +134,7 @@ def test_fretnet_post_proc_centers(fretnet, base_config):
     vals, vals_1hot, pitch_names = gen_random_post_proc_tensors(base_config)
 
     input = {}
-    input[key_names.KEY_PITCH_LAYER] = vals_1hot
+    input[key_names.KEY_PITCH_LOGITS] = vals_1hot
 
     output = fretnet.post_proc(input, pitch_names=pitch_names)
 
@@ -148,7 +148,7 @@ def run_fretnet_post_proc_pitch_weighted_average(fretnet, config):
     vals, vals_1hot, pitch_names = gen_random_post_proc_tensors(config)
 
     input = {}
-    input[key_names.KEY_PITCH_LAYER] = vals_1hot
+    input[key_names.KEY_PITCH_LOGITS] = vals_1hot
 
     output = fretnet.post_proc(input, pitch_names=pitch_names)
 
@@ -224,8 +224,8 @@ def test_loss_small(fretnet_small, base_config_small):
     bins, bins_1hot, pitch_names = gen_random_post_proc_tensors(base_config_small)
 
     input = {}
-    input[key_names.KEY_PITCH_LAYER] = bins_1hot
+    input[key_names.KEY_PITCH_LOGITS] = bins_1hot
 
     output = fretnet_small.post_proc(input, pitch_names=pitch_names)
     
-    loss = ppn.train.loss(output[key_names.KEY_PITCH_LAYER], bins, pitch_names)
+    loss = ppn.train.loss(output[key_names.KEY_PITCH_LOGITS], bins, pitch_names)
