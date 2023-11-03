@@ -1,5 +1,6 @@
 import poly_pitch_net as ppn
 import poly_pitch_net.datasets.guitarset as guitarset
+from poly_pitch_net.tools import key_names
 
 import amt_tools.tools
 from amt_tools.features import HCQT
@@ -97,12 +98,11 @@ def train(
     # Automatic mixed precision (amp) gradient scaler
     scaler = torch.cuda.amp.GradScaler()
     step, epoch = 0, 0
+    progress = tqdm(range(ppn.STEPS))
 
-    for iter in tqdm(range(ppn.STEPS)):
+    for iter in range(ppn.STEPS):
         # Loop through the dataset
         for batch in train_loader:
-
-            breakpoint()
             # Unpack batch
             features = batch[key_names.KEY_FEATURES]
             pitch_array = batch[key_names.KEY_PITCH_ARRAY]
@@ -110,10 +110,10 @@ def train(
             with torch.autocast(model.device.type):
 
                 # Forward pass
-                logits = model(features.to(model.device))
+                output = model(features.to(model.device))
 
                 # Compute losses
-                losses = ppn.train.loss(logits, pitch_array.to(model.device))
+                losses = ppn.train.loss(output[key_names.KEY_PITCH_LOGITS], pitch_array.to(model.device))
 
             # Zero the accumulated gradients
             optimizer.zero_grad()
@@ -132,7 +132,11 @@ def train(
 
             step += 1
 
+            progress.update()
+
         epoch += 1
+
+    progress.close()
 
     # Save final model
     torchutil.checkpoint.save(
