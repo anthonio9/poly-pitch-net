@@ -1,6 +1,7 @@
 import amt_tools.tools
 import poly_pitch_net as ppn
 from poly_pitch_net.datasets import guitarset
+from poly_pitch_net.tools import key_names
 import torch
 
 
@@ -32,5 +33,5 @@ def test_guitarset_batch():
     train_loader = iter(train_loader)
     batch = next(train_loader)
 
-    pitchlist_shape = (ppn.BATCH_SIZE, guitarset.GSET_PLAYERS, ppn.NUM_FRAMES)
-    assert batch[guitarset.KEY_PITCH_ARRAY].shape == pitchlist_shape
+    pitchlist_shape = (ppn.BATCH_SIZE, key_names.GSET_PLAYERS, ppn.NUM_FRAMES)
+    assert batch[key_names.KEY_PITCH_ARRAY].shape == pitchlist_shape

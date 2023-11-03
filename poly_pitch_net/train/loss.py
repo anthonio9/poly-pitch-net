@@ -32,7 +32,7 @@ def loss(logits, pitch, pitch_names=None):
         # keep compatibility with the tests
         no_pitch_bins = pitch_names.shape[-1]
         
-    logits = logits.reshape(-1, no_pitch_pitchbins).float()
+    logits = logits.reshape(-1, no_pitch_bins).float()
     pitch = pitch.flatten()
 
     loss.cents = ppn.tools.convert.bins_to_cents(

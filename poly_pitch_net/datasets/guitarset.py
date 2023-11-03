@@ -11,6 +11,12 @@ import poly_pitch_net as ppn
 import poly_pitch_net.tools.key_names as key_names
 
 
+GSET_SAMPLE_RATE = 44100
+GSET_HOP_LEN = 256
+GSET_TIME_STEP = GSET_HOP_LEN / GSET_SAMPLE_RATE
+GSET_PLAYERS = 6
+
+
 class GuitarSetPPN(GuitarSet):
     """
     Simple wrapper over the GuitarSet Dataset, which extracts a pitch array with values in hertz 

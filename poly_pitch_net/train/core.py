@@ -145,7 +145,7 @@ def train(
 
 def evaluate(
         loader: torch.utils.data.DataLoader,
-        model: ppn.models.FretNetCrepe,
+        model,
         writer: SummaryWriter):
     """
     Perform model evaluation.
@@ -158,4 +158,4 @@ def evaluate(
         pitch_array = batch[key_names.KEY_PITCH_ARRAY]
 
         # set the pitch names to something
-        model.post_proc(model(features), pitch_names=?)
+        model.post_proc(model(features))

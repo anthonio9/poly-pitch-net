@@ -4,6 +4,8 @@
 import guitar_transcription_continuous.utils as utils
 import amt_tools.tools as tools
 from poly_pitch_net.tools import key_names
+from poly_pitch_net.tools import convert
+import poly_pitch_net.config as ppn
 
 # Regular imports
 from torch import nn
@@ -225,7 +227,7 @@ class FretNetCrepe(nn.Module):
 
         return output
 
-    def post_proc(self, output, pitch_names):
+    def post_proc(self, output, pitch_names=None):
         """
         Calculate final weight averaged pitch value
 
@@ -260,7 +262,13 @@ class FretNetCrepe(nn.Module):
             ))
         # multi_pitch.shape == [B, C, T, O]
 
-        pitch_names = pitch_names.reshape(shape=multi_pitch.shape)
+        # this has to be corrected
+        if pitch_names is None:
+            pitch_names = torch.arange(0, ppn.PITCH_BINS)
+            pitch_names = pitch_names.expand(multi_pitch.shape)
+            pitch_names = convert.bins_to_cents(pitch_names)
+        else:
+            pitch_names = pitch_names.reshape(shape=multi_pitch.shape)
 
         # get argmax from each 360-vector
         centers = multi_pitch.argmax(dim=-1).to(torch.long)
