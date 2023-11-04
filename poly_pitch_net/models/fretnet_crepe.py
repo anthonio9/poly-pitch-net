@@ -42,10 +42,10 @@ class FretNetCrepe(nn.Module):
         self.online = False
 
         # Number of filters for each convolutional block
-        nf1 = 16 * model_complexity
-        nf2 = 32 * model_complexity
-        nf3 = 48 * model_complexity
-        nf4 = 64 * model_complexity
+        nf1 = 256   * model_complexity
+        nf2 = 64 * model_complexity
+        nf3 = 128 * model_complexity
+        nf4 = 256 * model_complexity
 
         # Kernel size for each convolutional block
         ks1 = (3, 3)
@@ -332,3 +332,25 @@ class FretNetCrepe(nn.Module):
         # Load the transcription model onto the device
         self.to(self.device)
 
+
+class FretNetBlock(torch.nn.Sequential):
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        pd: tuple[int, int] = (1, 1),
+        dl: tuple[int, int] = (1, 1),
+        ks: int =32
+        ):
+
+        layers = (
+            nn.Conv2d(in_channels, out_channels, ks, padding=pd, dilation=dl),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(),
+            nn.Conv2d(out_channels, out_channels, ks, padding=pd, dilation=dl),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(),
+        )
+
+        super().__init__(*layers)
