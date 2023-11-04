@@ -3,9 +3,11 @@ import poly_pitch_net as ppn
 from poly_pitch_net.datasets.guitarset import GuitarSetPPN
 from amt_tools.features import HCQT
 import librosa
+import os
 import random
 import torch
 from tqdm import tqdm
+import zlib
 
 
 def test_get_project_root():
@@ -46,7 +48,7 @@ def test_guitarset_batch():
 
     pitchlist_shape = (ppn.BATCH_SIZE, ppn.GSET_PLAYERS, ppn.NUM_FRAMES)
 
-    progress = tqdm(range(len(train_loader.dataset)))
+    progress = tqdm(range(len(train_loader.dataset) // ppn.BATCH_SIZE))
     for batch in train_loader:
         assert batch[ppn.KEY_PITCH_ARRAY].shape == pitchlist_shape
         progress.update()
@@ -93,7 +95,27 @@ def test_guitarset_batch_train():
     pitchlist_shape = (ppn.BATCH_SIZE, ppn.GSET_PLAYERS, ppn.NUM_FRAMES)
 
     
-    progress = tqdm(range(len(train_loader.dataset)))
+    progress = tqdm(range(len(train_loader.dataset) // ppn.BATCH_SIZE))
     for batch in train_loader:
         assert batch[ppn.KEY_PITCH_ARRAY].shape == pitchlist_shape
         progress.update()
+
+
+def test_guitarset_ungzip_train():
+    gtrain_path = ppn.GSET_CACHE_TRAIN / 'GuitarSetPPN' / 'HCQT'
+
+    failed = 0
+    succed = 0
+
+    for file in os.listdir(gtrain_path):
+        try:
+            batch = amt_tools.tools.load_dict_npz(gtrain_path / file)
+        except zlib.error as err:
+            print(f"{failed}: file {gtrain_path / file} failed to ungzip \n {err}") 
+            failed += 1
+        else: 
+            assert ppn.KEY_FEATURES in batch
+            succed += 1
+    
+    print(f"ungzip success with {succed} files!")
+
