@@ -5,6 +5,7 @@ from amt_tools.features import HCQT
 import librosa
 import random
 import torch
+from tqdm import tqdm
 
 
 def test_get_project_root():
@@ -45,8 +46,10 @@ def test_guitarset_batch():
 
     pitchlist_shape = (ppn.BATCH_SIZE, ppn.GSET_PLAYERS, ppn.NUM_FRAMES)
 
+    progress = tqdm(range(len(train_loader.dataset)))
     for batch in train_loader:
         assert batch[ppn.KEY_PITCH_ARRAY].shape == pitchlist_shape
+        progress.update()
 
 
 def test_guitarset_batch_train():
@@ -89,5 +92,8 @@ def test_guitarset_batch_train():
 
     pitchlist_shape = (ppn.BATCH_SIZE, ppn.GSET_PLAYERS, ppn.NUM_FRAMES)
 
+    
+    progress = tqdm(range(len(train_loader.dataset)))
     for batch in train_loader:
         assert batch[ppn.KEY_PITCH_ARRAY].shape == pitchlist_shape
+        progress.update()
