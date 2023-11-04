@@ -47,12 +47,12 @@ def loss(logits, pitch, pitch_names=None):
             25)
 
     # Sample normal distributions
-    pitch = torch.exp(distributions.log_prob(loss.cents)).permute(1, 0)
+    pitch_bins = torch.exp(distributions.log_prob(loss.cents)).permute(1, 0)
 
     # Normalize
-    pitch = pitch / (pitch.max(dim=1, keepdims=True).values + 1e-8)
+    pitch_bins = pitch_bins / (pitch_bins.max(dim=1, keepdims=True).values + 1e-8)
     
     # Compute binary cross-entropy loss
     return torch.nn.functional.binary_cross_entropy_with_logits(
         logits,
-        pitch)
+        pitch_bins)
