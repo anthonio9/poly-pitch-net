@@ -64,7 +64,7 @@ def run():
     # Create a dataset corresponding to the validation partition
     gset_val = GuitarSetPPN(base_dir=ppn.GSET_BASE_DIR,
                          splits=val_splits,
-                         num_frames=None,
+                         num_frames=ppn.NUM_FRAMES,
                          data_proc=data_proc,
                          profile=profile,
                          store_data=True,
@@ -156,7 +156,8 @@ def train(
         writer.add_scalar('train_loss_' + ppn.LOSS_BCE, train_losses)
         tloss_log.set_description(f"Train loss: {train_losses}")
 
-        eval_loss = evaluate(val_loader, model, writer)
+
+        eval_loss = evaluate(val_loader, model)
 
         # log the evaluation loss
         writer.add_scalar('eval_loss_' + ppn.LOSS_BCE, eval_loss)
@@ -187,14 +188,14 @@ def evaluate(
     eval_losses = []
 
     for batch in loader:
-        features = batch[ppn.KEY_FEATURES]
-        pitch_array = batch[ppn.KEY_PITCH_ARRAY]
+        features = batch[ppn.KEY_FEATURES].to(device=model.device)
+        pitch_array = batch[ppn.KEY_PITCH_ARRAY].to(device=model.device)
 
         # set the pitch names to something
-        output = model.post_proc(model(features))
+        output = model(features)
 
         # Compute losses
-        loss = ppn.train.loss(output[ppn.KEY_PITCH_LOGITS], pitch_array.to(model.device))
+        loss = ppn.train.loss(output[ppn.KEY_PITCH_LOGITS], pitch_array)
 
         eval_losses.append(loss.item())
 

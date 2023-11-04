@@ -119,3 +119,22 @@ def test_guitarset_ungzip_train():
     
     print(f"ungzip success with {succed} files!")
 
+
+def test_guitarset_ungzip_val():
+    gtrain_path = ppn.GSET_CACHE_VAL / 'GuitarSetPPN' / 'HCQT'
+
+    failed = 0
+    succed = 0
+
+    for file in os.listdir(gtrain_path):
+        try:
+            batch = amt_tools.tools.load_dict_npz(gtrain_path / file)
+        except zlib.error as err:
+            print(f"{failed}: file {gtrain_path / file} failed to ungzip \n {err}") 
+            failed += 1
+        else: 
+            assert ppn.KEY_FEATURES in batch
+            succed += 1
+    
+    print(f"ungzip success with {succed} files!")
+
