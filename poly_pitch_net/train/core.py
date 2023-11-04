@@ -71,6 +71,12 @@ def run():
                          save_loc=ppn.GSET_CACHE_VAL,
                          seed=ppn.RANDOM_SEED + 1)
 
+    # Create a PyTorch data loader for the dataset
+    val_loader = torch.utils.data.DataLoader(dataset=gset_val,
+                              batch_size=ppn.BATCH_SIZE,
+                              shuffle=True,
+                              drop_last=True)
+
     model = FretNetCrepe(
             dim_in=ppn.HCQT_DIM_IN,
             in_channels=ppn.HCQT_NO_HARMONICS,
@@ -78,10 +84,9 @@ def run():
             )
 
     model.change_device(device=0)
-    model.train()
 
     print("Starting the training")
-    train(train_loader, gset_val, model, model_dir)
+    train(train_loader, val_loader, model, model_dir)
 
 def train(
         train_loader,
@@ -98,9 +103,22 @@ def train(
     # Automatic mixed precision (amp) gradient scaler
     scaler = torch.cuda.amp.GradScaler()
     step, epoch = 0, 0
+
+    # steps progress bar on the screen
     progress = tqdm(range(ppn.STEPS))
 
-    for iter in range(ppn.STEPS):
+    # train loss message on the screen
+    tloss_log = tqdm(total=0, position=1, bar_format='{desc}')
+
+    # evaluation loss message on the screen
+    eloss_log = tqdm(total=0, position=2, bar_format='{desc}')
+
+
+    while step < ppn.STEPS:
+        model.train()
+
+        train_losses = []
+
         # Loop through the dataset
         for batch in train_loader:
             # Unpack batch
@@ -113,16 +131,14 @@ def train(
                 output = model(features.to(model.device))
 
                 # Compute losses
-                losses = ppn.train.loss(output[ppn.KEY_PITCH_LOGITS], pitch_array.to(model.device))
+                loss = ppn.train.loss(output[ppn.KEY_PITCH_LOGITS], pitch_array.to(model.device))
+                train_losses.append(loss.item())
 
             # Zero the accumulated gradients
             optimizer.zero_grad()
 
             # Backward pass
-            scaler.scale(losses).backward()
-
-            # log the loss
-            writer.add_scalar('train_loss_' + ppn.LOSS_BCE, losses)
+            scaler.scale(loss).backward()
 
             # Update weights
             scaler.step(optimizer)
@@ -133,6 +149,18 @@ def train(
             step += 1
 
             progress.update()
+
+        train_losses = sum(train_losses) / len(train_losses)
+
+        # log the trian loss
+        writer.add_scalar('train_loss_' + ppn.LOSS_BCE, train_losses)
+        tloss_log.set_description(f"Train loss: {train_losses}")
+
+        eval_loss = evaluate(val_loader, model, writer)
+
+        # log the evaluation loss
+        writer.add_scalar('eval_loss_' + ppn.LOSS_BCE, eval_loss)
+        eloss_log.set_description(f"Evaluation loss: {eval_loss}")
 
         epoch += 1
 
@@ -149,17 +177,27 @@ def train(
 
 def evaluate(
         loader: torch.utils.data.DataLoader,
-        model,
-        writer: SummaryWriter):
+        model):
     """
     Perform model evaluation.
     """
 
     model.eval()
 
+    eval_losses = []
+
     for batch in loader:
         features = batch[ppn.KEY_FEATURES]
         pitch_array = batch[ppn.KEY_PITCH_ARRAY]
 
         # set the pitch names to something
-        model.post_proc(model(features))
+        output = model.post_proc(model(features))
+
+        # Compute losses
+        loss = ppn.train.loss(output[ppn.KEY_PITCH_LOGITS], pitch_array.to(model.device))
+
+        eval_losses.append(loss.item())
+
+    eval_losses = sum(eval_losses) / len(eval_losses)
+
+    return eval_losses
