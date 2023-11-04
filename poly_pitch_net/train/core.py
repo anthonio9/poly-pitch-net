@@ -122,7 +122,7 @@ def train(
             scaler.scale(losses).backward()
 
             # log the loss
-            writer.add_scalar('train_loss ' + ppn.LOSS_BCE, losses)
+            writer.add_scalar('train_loss_' + ppn.LOSS_BCE, losses)
 
             # Update weights
             scaler.step(optimizer)
