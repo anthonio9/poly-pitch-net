@@ -1,16 +1,12 @@
 # Author: Frank Cwitkowitz <fcwitkow@ur.rochester.edu>
 
 # My imports
-import guitar_transcription_continuous.utils as utils
-import amt_tools.tools as tools
-from poly_pitch_net.tools import key_names
-from poly_pitch_net.tools import convert
-import poly_pitch_net.config as ppn
+from poly_pitch_net.tools.convert import bins_to_cents
+import poly_pitch_net as ppn
 
 # Regular imports
 from torch import nn
 import torch
-import math
 
 
 class FretNetCrepe(nn.Module):
@@ -221,7 +217,7 @@ class FretNetCrepe(nn.Module):
         embeddings = self.pitch_head(embeddings)
         # shape [B, 6*no_pitch_bins, T]
 
-        output[key_names.KEY_PITCH_LOGITS] = embeddings.unflatten(
+        output[ppn.KEY_PITCH_LOGITS] = embeddings.unflatten(
                 dim=1, sizes=(6, self.no_pitch_bins))
         # shape [B, 6, no_pitch_bins, T]
 
@@ -253,7 +249,7 @@ class FretNetCrepe(nn.Module):
           shape [B, C, T]
         """
         offset = 4
-        multi_pitch = output[key_names.KEY_PITCH_LOGITS]
+        multi_pitch = output[ppn.KEY_PITCH_LOGITS]
         multi_pitch = multi_pitch.reshape(shape=(
             multi_pitch.shape[0],
             multi_pitch.shape[1],
@@ -266,14 +262,14 @@ class FretNetCrepe(nn.Module):
         if pitch_names is None:
             pitch_names = torch.arange(0, ppn.PITCH_BINS)
             pitch_names = pitch_names.expand(multi_pitch.shape)
-            pitch_names = convert.bins_to_cents(pitch_names)
+            pitch_names = bins_to_cents(pitch_names)
         else:
             pitch_names = pitch_names.reshape(shape=multi_pitch.shape)
 
         # get argmax from each 360-vector
         centers = multi_pitch.argmax(dim=-1).to(torch.long)
         centers = centers.unsqueeze(-1)
-        output[key_names.KEY_PITCH_CENTERS] = centers.squeeze(dim=-1)
+        output[ppn.KEY_PITCH_CENTERS] = centers.squeeze(dim=-1)
         # centers.shape == [B, C, T]
 
         # weighted average: just the centers
@@ -305,7 +301,7 @@ class FretNetCrepe(nn.Module):
                     0)
             wg_avg += r_multi_pitch * r_pitch_names
 
-        output[key_names.KEY_PITCH_WG_AVG] = wg_avg
+        output[ppn.KEY_PITCH_WG_AVG] = wg_avg
 
         return output
 

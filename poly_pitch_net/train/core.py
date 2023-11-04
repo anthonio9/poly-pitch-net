@@ -1,9 +1,9 @@
 import poly_pitch_net as ppn
-import poly_pitch_net.datasets.guitarset as guitarset
-from poly_pitch_net.tools import key_names
-
+from poly_pitch_net.datasets.guitarset import GuitarSetPPN
+from poly_pitch_net.models import FretNetCrepe
 import amt_tools.tools
 from amt_tools.features import HCQT
+
 from tensorboardX import SummaryWriter
 import torch
 from tqdm import tqdm
@@ -13,8 +13,8 @@ import torchutil
 
 
 def run():
-    EX_NAME = '_'.join([ppn.models.FretNetCrepe.model_name(),
-                        guitarset.GuitarSetPPN.dataset_name(),
+    EX_NAME = '_'.join([FretNetCrepe.model_name(),
+                        GuitarSetPPN.dataset_name(),
                         HCQT.features_name()])
 
     # Create the root directory for the experiment files
@@ -28,14 +28,14 @@ def run():
     k = random.randrange(ppn.GSET_NO_PLAYERS)
 
     # Allocate training/testing splits
-    train_splits = guitarset.GuitarSet.available_splits()
+    train_splits = GuitarSet.available_splits()
     val_splits = [train_splits.pop(k), train_splits.pop(k-1)]
 
     # Create an HCQT feature extraction module comprising
     # the first five harmonics and a sub-harmonic, where each
     # harmonic transform spans 4 octaves w/ 3 bins per semitone
-    data_proc = HCQT(sample_rate=guitarset.GSET_SAMPLE_RATE,
-                     hop_length=guitarset.GSET_HOP_LEN,
+    data_proc = HCQT(sample_rate=ppn.GSET_SAMPLE_RATE,
+                     hop_length=ppn.GSET_HOP_LEN,
                      fmin=librosa.note_to_hz('E2'),
                      harmonics=[0.5, 1, 2, 3, 4, 5],
                      n_bins=144, bins_per_octave=36)
@@ -44,7 +44,7 @@ def run():
 
     print(f"Preparing the trian set in {ppn.GSET_CACHE_TRAIN}")
     # Create a dataset corresponding to the training partition
-    gset_train = guitarset.GuitarSetPPN(base_dir=ppn.GSET_BASE_DIR,
+    gset_train = GuitarSetPPN(base_dir=ppn.GSET_BASE_DIR,
                            splits=train_splits,
                            num_frames=ppn.NUM_FRAMES,
                            data_proc=data_proc,
@@ -62,7 +62,7 @@ def run():
 
     print(f"Preparing the validation set in {ppn.GSET_CACHE_VAL}")
     # Create a dataset corresponding to the validation partition
-    gset_val = guitarset.GuitarSetPPN(base_dir=ppn.GSET_BASE_DIR,
+    gset_val = GuitarSetPPN(base_dir=ppn.GSET_BASE_DIR,
                          splits=val_splits,
                          num_frames=None,
                          data_proc=data_proc,
@@ -71,7 +71,7 @@ def run():
                          save_loc=ppn.GSET_CACHE_VAL,
                          seed=ppn.RANDOM_SEED + 1)
 
-    model = ppn.models.FretNetCrepe(
+    model = FretNetCrepe(
             dim_in=ppn.HCQT_DIM_IN,
             in_channels=ppn.HCQT_NO_HARMONICS,
             no_pitch_bins=ppn.PITCH_BINS
@@ -104,8 +104,8 @@ def train(
         # Loop through the dataset
         for batch in train_loader:
             # Unpack batch
-            features = batch[key_names.KEY_FEATURES]
-            pitch_array = batch[key_names.KEY_PITCH_ARRAY]
+            features = batch[ppn.KEY_FEATURES]
+            pitch_array = batch[ppn.KEY_PITCH_ARRAY]
 
             with torch.autocast(model.device.type):
 
@@ -113,7 +113,7 @@ def train(
                 output = model(features.to(model.device))
 
                 # Compute losses
-                losses = ppn.train.loss(output[key_names.KEY_PITCH_LOGITS], pitch_array.to(model.device))
+                losses = ppn.train.loss(output[ppn.KEY_PITCH_LOGITS], pitch_array.to(model.device))
 
             # Zero the accumulated gradients
             optimizer.zero_grad()
@@ -158,8 +158,8 @@ def evaluate(
     model.eval()
 
     for batch in loader:
-        features = batch[key_names.KEY_FEATURES]
-        pitch_array = batch[key_names.KEY_PITCH_ARRAY]
+        features = batch[ppn.KEY_FEATURES]
+        pitch_array = batch[ppn.KEY_PITCH_ARRAY]
 
         # set the pitch names to something
         model.post_proc(model(features))

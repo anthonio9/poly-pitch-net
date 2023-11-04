@@ -1,7 +1,8 @@
 import amt_tools.tools
 import poly_pitch_net as ppn
-from poly_pitch_net.datasets import guitarset
-from poly_pitch_net.tools import key_names
+from poly_pitch_net.datasets.guitarset import GuitarSetPPN
+from amt_tools.features import HCQT
+import librosa
 import torch
 
 
@@ -14,15 +15,26 @@ def test_get_project_root():
 def test_guitarset_batch():
     profile = amt_tools.tools.GuitarProfile(num_frets=19)
 
+    # Create an HCQT feature extraction module comprising
+    # the first five harmonics and a sub-harmonic, where each
+    # harmonic transform spans 4 octaves w/ 3 bins per semitone
+    data_proc = HCQT(sample_rate=ppn.GSET_SAMPLE_RATE,
+                     hop_length=ppn.GSET_HOP_LEN,
+                     fmin=librosa.note_to_hz('E2'),
+                     harmonics=[0.5, 1, 2, 3, 4, 5],
+                     n_bins=144, bins_per_octave=36)
+
     # create a train_loader
-    gset_train = guitarset.GuitarSetPPN(base_dir=ppn.GSET_BASE_DIR,
-                           splits=[guitarset.GuitarSetPPN.available_splits().pop(0)],
-                           num_frames=ppn.NUM_FRAMES,
-                           profile=profile,
-                           reset_data=False, # set to true in the future trainings
-                           save_data=True, # set to true in the future trainings
-                           save_loc=ppn.GSET_CACHE_PYTEST,
-                           seed=ppn.RANDOM_SEED)
+    gset_train = GuitarSetPPN(
+            base_dir=ppn.GSET_BASE_DIR,
+            splits=[GuitarSetPPN.available_splits().pop(0)],
+            num_frames=ppn.NUM_FRAMES,
+            profile=profile,
+            data_proc=data_proc,
+            reset_data=False, # set to true in the future trainings
+            save_data=True, # set to true in the future trainings
+            save_loc=ppn.GSET_CACHE_PYTEST,
+            seed=ppn.RANDOM_SEED)
 
     # Create a PyTorch data loader for the dataset
     train_loader = torch.utils.data.DataLoader(dataset=gset_train,
@@ -30,8 +42,7 @@ def test_guitarset_batch():
                               shuffle=True,
                               drop_last=True)
 
-    train_loader = iter(train_loader)
-    batch = next(train_loader)
+    pitchlist_shape = (ppn.BATCH_SIZE, ppn.GSET_PLAYERS, ppn.NUM_FRAMES)
 
-    pitchlist_shape = (ppn.BATCH_SIZE, key_names.GSET_PLAYERS, ppn.NUM_FRAMES)
-    assert batch[key_names.KEY_PITCH_ARRAY].shape == pitchlist_shape
+    for batch in train_loader:
+        assert batch[ppn.KEY_PITCH_ARRAY].shape == pitchlist_shape

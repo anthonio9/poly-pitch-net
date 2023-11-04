@@ -55,24 +55,36 @@ GSET_CACHE = ppn.tools.misc.get_project_root().parent.parent / 'generated' / 'da
 GSET_CACHE_TRAIN = GSET_CACHE / 'train'
 GSET_CACHE_PYTEST = GSET_CACHE / 'pytest'
 GSET_CACHE_VAL = GSET_CACHE / 'val'
-GSET_NO_PLAYERS = 6
+
+# guitarset recording charachteristics
+GSET_SAMPLE_RATE = 44100
+GSET_HOP_LEN = 256
+GSET_TIME_STEP = GSET_HOP_LEN / GSET_SAMPLE_RATE
+GSET_PLAYERS = 6
 
 # HCQT data processor paramters
 HCQT_DIM_IN = 144
 HCQT_NO_HARMONICS = 6
 
-# Keys for the processed data
+
+##########################################
+# MODEL and DATASET dictionary keys
+##########################################
+
+# model only 
+KEY_PITCH_WG_AVG = 'pitch_wg_average'
+KEY_PITCH_CENTERS = 'pitch_centers'
+KEY_PITCH_LOGITS = 'pitch_logits'
+
+# guitarset
+KEY_FS = 'fs'
 KEY_FEATURES = 'features'
 KEY_AUDIO = 'audio'
 KEY_TIMES = 'times'
 KEY_TRACK = 'track'
 KEY_MULTIPITCH = 'multi_pitch'
-KEY_TABLATURE = 'tablature'
-KEY_TABLATURE_REL = 'tablature_rel'
-KEY_PITCHLIST = 'pitch_list'
-KEY_PITCH_WG_AVG = 'pitch_wg_average'
-KEY_PITCH_CENTERS = 'pitch_centers'
-KEY_PITCH_LAYER = 'pitch_layer'
+KEY_PITCH_ARRAY = 'pitch_array'
+KEY_FEATURES = 'features'
 
 ###############################################################################
 # Training parameters
