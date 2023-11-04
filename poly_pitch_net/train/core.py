@@ -25,10 +25,10 @@ def run():
 
     random.seed(ppn.RANDOM_SEED)
     torch.manual_seed(ppn.RANDOM_SEED)
-    k = random.randrange(ppn.GSET_NO_PLAYERS)
+    k = random.randrange(ppn.GSET_PLAYERS)
 
     # Allocate training/testing splits
-    train_splits = GuitarSet.available_splits()
+    train_splits = GuitarSetPPN.available_splits()
     val_splits = [train_splits.pop(k), train_splits.pop(k-1)]
 
     # Create an HCQT feature extraction module comprising
