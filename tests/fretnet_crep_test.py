@@ -262,10 +262,13 @@ def test_pitch_names_generation(fretnet, base_config):
                               shuffle=True,
                               drop_last=True)
 
+    fretnet.change_device(0)
+    fretnet.eval()
+
     train_loader = iter(train_loader)
     batch = next(train_loader)
 
-    output = fretnet.forward(batch[ppn.KEY_FEATURES])
+    output = fretnet.forward(batch[ppn.KEY_FEATURES].to(fretnet.device))
     output = fretnet.post_proc(output)
 
 

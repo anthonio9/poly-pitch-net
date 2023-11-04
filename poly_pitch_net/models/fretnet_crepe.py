@@ -250,6 +250,7 @@ class FretNetCrepe(nn.Module):
         """
         offset = 4
         multi_pitch = output[ppn.KEY_PITCH_LOGITS]
+        multi_pitch = multi_pitch.to(device=self.device)
         multi_pitch = multi_pitch.reshape(shape=(
             multi_pitch.shape[0],
             multi_pitch.shape[1],
@@ -265,6 +266,8 @@ class FretNetCrepe(nn.Module):
             pitch_names = bins_to_cents(pitch_names)
         else:
             pitch_names = pitch_names.reshape(shape=multi_pitch.shape)
+
+        pitch_names = pitch_names.to(device=self.device)
 
         # get argmax from each 360-vector
         centers = multi_pitch.argmax(dim=-1).to(torch.long)
