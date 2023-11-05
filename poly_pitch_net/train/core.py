@@ -153,14 +153,18 @@ def train(
         train_losses = sum(train_losses) / len(train_losses)
 
         # log the trian loss
-        writer.add_scalar('train_loss_' + ppn.LOSS_BCE, train_losses)
+        writer.add_scalar(tag='train_loss_' + ppn.LOSS_BCE, 
+                          scalar_value=train_losses, 
+                          global_step=step)
         tloss_log.set_description(f"Train loss: {train_losses}")
 
 
         eval_loss = evaluate(val_loader, model)
 
         # log the evaluation loss
-        writer.add_scalar('eval_loss_' + ppn.LOSS_BCE, eval_loss)
+        writer.add_scalar(tag='eval_loss_' + ppn.LOSS_BCE,
+                          scalar_value=eval_loss,
+                          global_step=step)
         eloss_log.set_description(f"Evaluation loss: {eval_loss}")
 
         epoch += 1
