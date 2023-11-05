@@ -233,7 +233,8 @@ def test_loss_small(fretnet_small, base_config_small):
     loss = ppn.train.loss(output[ppn.KEY_PITCH_LOGITS], bins, pitch_names)
 
 
-def test_pitch_names_generation(fretnet, base_config):
+@pytest.fixture(scope="session")
+def train_loader():
     profile = tools.GuitarProfile(num_frets=19)
 
     # Create an HCQT feature extraction module comprising
@@ -262,6 +263,43 @@ def test_pitch_names_generation(fretnet, base_config):
                               shuffle=True,
                               drop_last=True)
 
+    return train_loader
+
+
+def test_loss_is_valid(fretnet, base_config, train_loader):
+    train_loader = iter(train_loader)
+    batch = next(train_loader)
+
+    pitch = batch[ppn.KEY_PITCH_ARRAY]
+
+    # mock a pitch logits layer output
+    pitch = pitch.flatten()
+
+    cents = ppn.tools.convert.bins_to_cents(
+            torch.arange(base_config.no_pitch_bins))[:, None]
+
+    # Ensure values are on correct device (no-op if devices are the same)
+    cents = cents.to(pitch.device)
+
+    # Create normal distributions
+    distributions = torch.distributions.Normal(
+            ppn.tools.convert.frequency_to_cents(pitch), 
+            25)
+
+    # Sample normal distributions
+    pitch_bins = torch.exp(distributions.log_prob(cents)).permute(1, 0)
+
+    # Normalize
+    pitch_bins = pitch_bins / (pitch_bins.max(dim=1, keepdims=True).values + 1e-8)
+    pitch_bins = pitch_bins.reshape(base_config.batch_size,
+                                    base_config.no_strings,
+                                    base_config.no_pitch_bins,
+                                    base_config.no_frames)
+
+    loss = ppn.train.loss(pitch_bins, batch[ppn.KEY_PITCH_ARRAY])
+
+
+def test_pitch_names_generation(fretnet, base_config, train_loader):
     fretnet.change_device(0)
     fretnet.eval()
 

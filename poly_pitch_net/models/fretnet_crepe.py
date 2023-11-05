@@ -136,7 +136,6 @@ class FretNetCrepe(nn.Module):
         self.pitch_head = nn.Sequential(
             nn.Conv1d(nf4 * (self.dim_in // rd1[0] // rd2[0] // rd3[0]), self.no_strings*self.no_pitch_bins, 1),
             nn.Dropout(dpx),
-            nn.Sigmoid()
         )
 
     @classmethod
