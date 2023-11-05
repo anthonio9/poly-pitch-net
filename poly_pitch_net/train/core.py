@@ -182,22 +182,22 @@ def evaluate(
     """
     Perform model evaluation.
     """
-
-    model.eval()
-
     eval_losses = []
 
-    for batch in loader:
-        features = batch[ppn.KEY_FEATURES].to(device=model.device)
-        pitch_array = batch[ppn.KEY_PITCH_ARRAY].to(device=model.device)
+    with torch.no_grad():
+        model.eval()
 
-        # set the pitch names to something
-        output = model(features)
+        for batch in loader:
+            features = batch[ppn.KEY_FEATURES].to(device=model.device)
+            pitch_array = batch[ppn.KEY_PITCH_ARRAY].to(device=model.device)
 
-        # Compute losses
-        loss = ppn.train.loss(output[ppn.KEY_PITCH_LOGITS], pitch_array)
+            # set the pitch names to something
+            output = model(features)
 
-        eval_losses.append(loss.item())
+            # Compute losses
+            loss = ppn.train.loss(output[ppn.KEY_PITCH_LOGITS], pitch_array)
+
+            eval_losses.append(loss.item())
 
     eval_losses = sum(eval_losses) / len(eval_losses)
 
