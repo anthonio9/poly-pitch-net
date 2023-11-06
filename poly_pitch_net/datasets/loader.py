@@ -1,6 +1,11 @@
 import amt_tools.tools
+from amt_tools.features import HCQT
+import librosa
 from poly_pitch_net.datasets.guitarset import GuitarSetPPN
 import poly_pitch_net as ppn
+import torch
+
+import random
 
 
 def loader(partition: str='train', seed: int=None):
@@ -40,7 +45,7 @@ def loader(partition: str='train', seed: int=None):
 
     profile = amt_tools.tools.GuitarProfile(num_frets=19)
 
-    print(f"Preparing the trian set in {dataset_cache_path}")
+    print(f"Preparing the dataset in {dataset_cache_path}")
     # Create a dataset
     gset = GuitarSetPPN(base_dir=ppn.GSET_BASE_DIR,
                            splits=dataset_splits,

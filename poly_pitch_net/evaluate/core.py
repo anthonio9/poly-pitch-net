@@ -1,5 +1,6 @@
 import amt_tools.tools
 import poly_pitch_net as ppn
+from poly_pitch_net.models import FretNetCrepe
 
 from pathlib import Path
 import torch
@@ -40,6 +41,7 @@ def run_evaluation(
         model.to(device)
         features = batch[ppn.KEY_FEATURES].to(device)
         output = model(features)
+        output[ppn.KEY_PITCH_LOGITS] = torch.nn.functional.sigmoid(output[ppn.KEY_PITCH_LOGITS])
         output = model.post_proc(output)
 
     features = batch[ppn.KEY_FEATURES].numpy()[0, 0, :, :]

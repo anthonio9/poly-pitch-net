@@ -105,7 +105,7 @@ def train(
     step, epoch = 0, 0
 
     # steps progress bar on the screen
-    progress = tqdm(range(ppn.STEPS))
+    progress = tqdm(range(ppn.STEPS * 2))
 
     # train loss message on the screen
     tloss_log = tqdm(total=0, position=1, bar_format='{desc}')
@@ -114,7 +114,7 @@ def train(
     eloss_log = tqdm(total=0, position=2, bar_format='{desc}')
 
 
-    while step < ppn.STEPS:
+    while step < ppn.STEPS * 2:
         model.train()
 
         train_losses = []
