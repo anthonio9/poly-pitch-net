@@ -1,0 +1,7 @@
+== 5.11.2023
+
+SIGMOID - what an huge problem it was today!
+
+Binary crosss entropy loss is the loss used in the penn model, that I'm taking quite a lot of inspiration from, however it's not just a regular BCE, it's the BCE with LOGITS - `binary_cross_entropy_with_logits`. What is it exactly and how does it differ from binary cross entropy? Well, the difference is that BCE with logits applies the sigmoid function to the input just before Calculating the loss. The sigmoid funciton turns logits, which are the output values of the last layer in the nn model, into probabilities. 
+
+The problem in my case was that the funciton would always output 0.69 and therefore the model wasn't capable of traning itself, 0.69 in the world of BCE means that the output no better than random. Why? Having understood what exactly is the difference between the two I decided to take a look at my model's file and THERE IT WAS, the sigmoid funciton called right after the logits output. Hopefully now that it's gone, the model will train much better!

@@ -11,8 +11,7 @@ from guitar_transcription_continuous.evaluators import *
 from amt_tools.features import CQT, HCQT
 
 from amt_tools.transcribe import ComboEstimator, \
-                                 TablatureWrapper, \
-                                 StackedOnsetsWrapper, \
+                                 TablatureWrapper, \ StackedOnsetsWrapper, \
                                  StackedOffsetsWrapper, \
                                  StackedNoteTranscriber
 from amt_tools.evaluate import ComboEvaluator, \

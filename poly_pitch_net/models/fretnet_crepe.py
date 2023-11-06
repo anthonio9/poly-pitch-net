@@ -1,14 +1,12 @@
 # Author: Frank Cwitkowitz <fcwitkow@ur.rochester.edu>
 
 # My imports
-import guitar_transcription_continuous.utils as utils
-import amt_tools.tools as tools
-from poly_pitch_net.tools import key_names
+from poly_pitch_net.tools.convert import bins_to_cents
+import poly_pitch_net as ppn
 
 # Regular imports
 from torch import nn
 import torch
-import math
 
 
 class FretNetCrepe(nn.Module):
@@ -18,7 +16,8 @@ class FretNetCrepe(nn.Module):
     """
 
     def __init__(self, dim_in, in_channels, model_complexity=1,
-                 matrix_path=None, device='cpu', frames=1, no_pitch_bins=360):
+                 matrix_path=None, device='cpu', frames=1,
+                 no_strings=6, no_pitch_bins=360):
         """
         Initialize all components of the model.
 
@@ -36,15 +35,17 @@ class FretNetCrepe(nn.Module):
         self.no_pitch_bins = no_pitch_bins
         self.in_channels = in_channels
         self.dim_in = dim_in
+        self.no_strings = no_strings
+        self.device = device
 
         # Initialize a flag to check whether to pad input features
         self.online = False
 
         # Number of filters for each convolutional block
-        nf1 = 16 * model_complexity
-        nf2 = 32 * model_complexity
-        nf3 = 48 * model_complexity
-        nf4 = 64 * model_complexity
+        nf1 = 256   * model_complexity
+        nf2 = 64 * model_complexity
+        nf3 = 128 * model_complexity
+        nf4 = 256 * model_complexity
 
         # Kernel size for each convolutional block
         ks1 = (3, 3)
@@ -133,7 +134,7 @@ class FretNetCrepe(nn.Module):
         )
 
         self.pitch_head = nn.Sequential(
-            nn.Conv1d(nf4 * (self.dim_in // rd1[0] // rd2[0] // rd3[0]), 6*360, 1),
+            nn.Conv1d(nf4 * (self.dim_in // rd1[0] // rd2[0] // rd3[0]), self.no_strings*self.no_pitch_bins, 1),
             nn.Dropout(dpx),
         )
 
@@ -215,13 +216,13 @@ class FretNetCrepe(nn.Module):
         embeddings = self.pitch_head(embeddings)
         # shape [B, 6*no_pitch_bins, T]
 
-        output[key_names.KEY_PITCH_LAYER] = embeddings.unflatten(
+        output[ppn.KEY_PITCH_LOGITS] = embeddings.unflatten(
                 dim=1, sizes=(6, self.no_pitch_bins))
         # shape [B, 6, no_pitch_bins, T]
 
         return output
 
-    def post_proc(self, output, pitch_names):
+    def post_proc(self, output, pitch_names=None):
         """
         Calculate final weight averaged pitch value
 
@@ -244,22 +245,34 @@ class FretNetCrepe(nn.Module):
         ----------
         output : list of tuples
           List containing time / pitch bindings.
+          shape [B, C, T]
         """
         offset = 4
-        multi_pitch = output[key_names.KEY_PITCH_LAYER]
+        multi_pitch = output[ppn.KEY_PITCH_LOGITS]
+        multi_pitch = multi_pitch.to(device=self.device)
         multi_pitch = multi_pitch.reshape(shape=(
             multi_pitch.shape[0],
             multi_pitch.shape[1],
             multi_pitch.shape[-1],
             multi_pitch.shape[2]
             ))
+        # multi_pitch.shape == [B, C, T, O]
 
-        pitch_names = pitch_names.reshape(shape=multi_pitch.shape)
+        # this has to be corrected
+        if pitch_names is None:
+            pitch_names = torch.arange(0, ppn.PITCH_BINS)
+            pitch_names = pitch_names.expand(multi_pitch.shape)
+            pitch_names = bins_to_cents(pitch_names)
+        else:
+            pitch_names = pitch_names.reshape(shape=multi_pitch.shape)
+
+        pitch_names = pitch_names.to(device=self.device)
 
         # get argmax from each 360-vector
         centers = multi_pitch.argmax(dim=-1).to(torch.long)
         centers = centers.unsqueeze(-1)
-        output[key_names.KEY_PITCH_CENTERS] = centers.squeeze(dim=-1)
+        output[ppn.KEY_PITCH_CENTERS] = centers.squeeze(dim=-1)
+        # centers.shape == [B, C, T]
 
         # weighted average: just the centers
         wg_avg = multi_pitch.gather(3, centers) * pitch_names.gather(3, centers)
@@ -290,6 +303,53 @@ class FretNetCrepe(nn.Module):
                     0)
             wg_avg += r_multi_pitch * r_pitch_names
 
-        output[key_names.KEY_PITCH_WG_AVG] = wg_avg
+        output[ppn.KEY_PITCH_WG_AVG] = wg_avg
 
         return output
+
+    def change_device(self, device=None):
+        """
+        Change the device and load the model onto the new device.
+
+        Parameters
+        ----------
+        device : string, int or None, optional (default None)
+          Device to load model onto
+        """
+
+        if device is None:
+            # If the function is called without a device, use the current device
+            device = self.device
+
+        if isinstance(device, int):
+            # If device is an integer, assume device represents GPU number
+            device = torch.device(f'cuda:{device}'
+                                  if torch.cuda.is_available() else 'cpu')
+
+        # Change device field
+        self.device = device
+        # Load the transcription model onto the device
+        self.to(self.device)
+
+
+class FretNetBlock(torch.nn.Sequential):
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        pd: tuple[int, int] = (1, 1),
+        dl: tuple[int, int] = (1, 1),
+        ks: int =32
+        ):
+
+        layers = (
+            nn.Conv2d(in_channels, out_channels, ks, padding=pd, dilation=dl),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(),
+            nn.Conv2d(out_channels, out_channels, ks, padding=pd, dilation=dl),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(),
+        )
+
+        super().__init__(*layers)

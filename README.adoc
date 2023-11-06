@@ -31,6 +31,12 @@ If any errors related to missing dictionary keys occur, make sure that the `rese
 python3 poly_pitch_net_experiments/experiment_fretnet_cnn.py
 ----
 
+.run the training script with nohup
+[source, shell]
+----
+nohup python3 poly_pitch_net_experiments/experiment_fretnet_cnn.py > output.txt 2>&1 &
+----
+
 == Tests
 
 Pytest is the framework of our choice. 
