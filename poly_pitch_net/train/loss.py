@@ -53,6 +53,6 @@ def loss(logits, pitch, pitch_names=None):
     pitch_bins = pitch_bins / (pitch_bins.max(dim=1, keepdims=True).values + 1e-8)
 
     # Compute binary cross-entropy loss
-    return torch.nn.functional.binary_cross_entropy_with_logits(
+    return torch.nn.functional.binary_cross_entropy(
         logits,
         pitch_bins)

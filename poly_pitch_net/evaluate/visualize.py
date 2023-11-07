@@ -33,7 +33,7 @@ def pitch_to_lines(pitch_array, times, linestyle='solid', label='String'):
     def make_proxy(color, **kwargs):
         return Line2D([0, 1], [0, 1], color=color, **kwargs)
 
-    proxies = [make_proxy(color, linewidth=5) for color in colors]
+    proxies = [make_proxy(color, linestyle=linestyle, linewidth=2) for color in colors]
     string_labels = [f"{label} {st}" for st in range(pitch_array.shape[0])]
 
     return lines, proxies, string_labels
@@ -87,6 +87,4 @@ def plot_poly_pitch(
 
     ax.legend(proxies, string_labels, bbox_to_anchor=(1.01, 1),
                          loc='upper left', borderaxespad=0.)
-    # fig.legend(proxies, string_labels, loc='outside right upper')
-
     plt.show()
