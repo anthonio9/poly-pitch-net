@@ -16,8 +16,6 @@ def run_evaluation(
         print(f"Given model path '{model_path}' does not exist.")
         return 1
 
-    device = torch.device('cpu' if gpu is None else f'cuda:{gpu}')
-
     model = FretNetCrepe(
             dim_in=ppn.HCQT_DIM_IN,
             in_channels=ppn.HCQT_NO_HARMONICS,
@@ -34,21 +32,24 @@ def run_evaluation(
 
     loader = ppn.datasets.loader('val')
 
-    loader = iter(loader)
-    batch = next(loader)
+    iloader = iter(loader)
+    batch = next(iloader)
 
     with torch.no_grad():
-        model.to(device)
-        features = batch[ppn.KEY_FEATURES].to(device)
+        model.change_device(gpu)
+        features = batch[ppn.KEY_FEATURES].to(model.device)
         output = model(features)
         output[ppn.KEY_PITCH_LOGITS] = torch.nn.functional.sigmoid(output[ppn.KEY_PITCH_LOGITS])
         output = model.post_proc(output)
+        loss = ppn.train.evaluate(loader, model)
 
-    features = batch[ppn.KEY_FEATURES].numpy()[0, 0, :, :]
-    pitch_gt = batch[ppn.KEY_PITCH_ARRAY].numpy()[0, :, :]
-    times = batch[ppn.KEY_TIMES].numpy()[0, :]
+        print(f"evaluation BCE loss: {loss}")
 
-    pitch = output[ppn.KEY_PITCH_WG_AVG].numpy()[0, :, :]
+    features = batch[ppn.KEY_FEATURES].cpu().numpy()[0, 0, :, :]
+    pitch_gt = batch[ppn.KEY_PITCH_ARRAY].cpu().numpy()[0, :, :]
+    times = batch[ppn.KEY_TIMES].cpu().numpy()[0, :]
+
+    pitch = output[ppn.KEY_PITCH_WG_AVG].cpu().numpy()[0, :, :]
     pitch = ppn.tools.convert.cents_to_frequency(pitch)
 
     ppn.evaluate.plot_poly_pitch(freq=features,
