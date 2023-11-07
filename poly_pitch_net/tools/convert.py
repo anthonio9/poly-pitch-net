@@ -11,3 +11,8 @@ def bins_to_cents(bins):
 def frequency_to_cents(frequency):
     """Convert frequency in Hz to cents"""
     return ppn.OCTAVE * torch.log2(frequency / ppn.FMIN)
+
+
+def cents_to_frequency(cents):
+    """Converts cents to frequency in Hz"""
+    return ppn.FMIN * 2 ** (cents / penn.OCTAVE)

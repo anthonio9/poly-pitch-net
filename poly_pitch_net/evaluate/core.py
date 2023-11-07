@@ -49,6 +49,7 @@ def run_evaluation(
     times = batch[ppn.KEY_TIMES].numpy()[0, :]
 
     pitch = output[ppn.KEY_PITCH_WG_AVG].numpy()[0, :, :]
+    pitch = ppn.tools.convert.cents_to_frequency()
 
     ppn.evaluate.plot_poly_pitch(freq=features,
                                  pitch_hat=pitch,
