@@ -23,59 +23,8 @@ def run():
     # Create a log directory for the training experiment
     model_dir = experiment_dir / 'models'
 
-    random.seed(ppn.RANDOM_SEED)
-    torch.manual_seed(ppn.RANDOM_SEED)
-    k = random.randrange(ppn.GSET_PLAYERS)
-
-    # Allocate training/testing splits
-    train_splits = GuitarSetPPN.available_splits()
-    val_splits = [train_splits.pop(k), train_splits.pop(k-1)]
-
-    # Create an HCQT feature extraction module comprising
-    # the first five harmonics and a sub-harmonic, where each
-    # harmonic transform spans 4 octaves w/ 3 bins per semitone
-    data_proc = HCQT(sample_rate=ppn.GSET_SAMPLE_RATE,
-                     hop_length=ppn.GSET_HOP_LEN,
-                     fmin=librosa.note_to_hz('E2'),
-                     harmonics=[0.5, 1, 2, 3, 4, 5],
-                     n_bins=144, bins_per_octave=36)
-
-    profile = amt_tools.tools.GuitarProfile(num_frets=19)
-
-    print(f"Preparing the trian set in {ppn.GSET_CACHE_TRAIN}")
-    # Create a dataset corresponding to the training partition
-    gset_train = GuitarSetPPN(base_dir=ppn.GSET_BASE_DIR,
-                           splits=train_splits,
-                           num_frames=ppn.NUM_FRAMES,
-                           data_proc=data_proc,
-                           profile=profile,
-                           reset_data=False, # set to true in the future trainings
-                           save_data=True, # set to true in the future trainings
-                           save_loc=ppn.GSET_CACHE_TRAIN,
-                           seed=ppn.RANDOM_SEED)
-
-    # Create a PyTorch data loader for the dataset
-    train_loader = torch.utils.data.DataLoader(dataset=gset_train,
-                              batch_size=ppn.BATCH_SIZE,
-                              shuffle=True,
-                              drop_last=True)
-
-    print(f"Preparing the validation set in {ppn.GSET_CACHE_VAL}")
-    # Create a dataset corresponding to the validation partition
-    gset_val = GuitarSetPPN(base_dir=ppn.GSET_BASE_DIR,
-                         splits=val_splits,
-                         num_frames=ppn.NUM_FRAMES,
-                         data_proc=data_proc,
-                         profile=profile,
-                         store_data=True,
-                         save_loc=ppn.GSET_CACHE_VAL,
-                         seed=ppn.RANDOM_SEED + 1)
-
-    # Create a PyTorch data loader for the dataset
-    val_loader = torch.utils.data.DataLoader(dataset=gset_val,
-                              batch_size=ppn.BATCH_SIZE,
-                              shuffle=True,
-                              drop_last=True)
+    train_loader = ppn.datasets.loader('train')
+    val_loader = ppn.datasets.loader('val')
 
     model = FretNetCrepe(
             dim_in=ppn.HCQT_DIM_IN,
