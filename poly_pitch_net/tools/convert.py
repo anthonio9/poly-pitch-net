@@ -15,4 +15,4 @@ def frequency_to_cents(frequency):
 
 def cents_to_frequency(cents):
     """Converts cents to frequency in Hz"""
-    return ppn.FMIN * 2 ** (cents / penn.OCTAVE)
+    return ppn.FMIN * 2 ** (cents / ppn.OCTAVE)
