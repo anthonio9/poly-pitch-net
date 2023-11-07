@@ -28,7 +28,7 @@ def loader(partition: str='train', seed: int=None):
     elif 'pytest' in partition:
         dataset_cache_path = ppn.GSET_CACHE_PYTEST
         dataset_seed = seed
-        dataset_seed = [val_splits[0]]
+        dataset_splits = [val_splits[0]]
     else:
         dataset_cache_path = ppn.GSET_CACHE_TRAIN
         dataset_seed = seed

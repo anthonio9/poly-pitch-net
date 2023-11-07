@@ -1,2 +1,2 @@
-from .visualize import *
+from .visualize import plot_poly_pitch
 from .core import run_evaluation
