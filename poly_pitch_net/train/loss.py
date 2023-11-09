@@ -54,3 +54,5 @@ def loss(logits, pitch, pitch_names=None):
     
     # Compute binary cross-entropy loss
     return torch.nn.functional.binary_cross_entropy_with_logits(
+            logits,
+            pitch_bins)
