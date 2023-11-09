@@ -1,4 +1,4 @@
-# Author: Frank Cwitkowitz <fcwitkow@ur.rochester.edu>
+# Author: Antoni Jankowski <antoni.s.jankowski@gmail.com>
 
 # My imports
 from poly_pitch_net.tools.convert import bins_to_cents
