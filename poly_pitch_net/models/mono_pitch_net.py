@@ -2,7 +2,7 @@ import poly_pitch_net as ppn
 import torch.nn as nn
 
 
-class MonoPitchNet(nn.module):
+class MonoPitchNet(nn.Module):
     """A small model focused on guitar pitch recognition. 
 
     The purpose of the model is to recognize pitch from one string only, 
@@ -21,13 +21,15 @@ class MonoPitchNet(nn.module):
             no_pitch_bins (int): number of the output pitch bins logits, defaults to 360.
         """
 
+        nn.Module.__init__(self)
+
         self.dim_int = dim_in
         self.in_channels = in_channels
         self.no_pitch_bins = no_pitch_bins
 
         self.conv1 = MonoPitchBlock(in_channels, 256)
         self.conv2 = MonoPitchBlock(256, 32, reduction=2)
-        self.conv3 = MonoPitchBlock(32, 128, reduction=2)
+        self.conv3 = MonoPitchBlock(32, 128, reduction=2, dropout=0.25)
 
         self.pitch_head = nn.Conv1d(
                 128 * dim_in // self.conv2.reduction // self.conv3.reduction,
@@ -91,7 +93,8 @@ class MonoPitchBlock(nn.Sequential):
             kernel_size: tuple[int, int]=(3, 3),
             padding: tuple[int, int]=(1, 1),
             dilation: tuple[int, int]=(1, 1),
-            reduction: int=None
+            reduction: int=None,
+            dropout: float=0.5,
             ):
         layers = (
                 nn.Conv2d(in_channels,
@@ -108,8 +111,8 @@ class MonoPitchBlock(nn.Sequential):
         if reduction is not None:
             self.reduction = reduction
             layers += (
-                    nn.MaxPool2d(self.reduction)
-                    nn.Dropout((1, 1))
+                    nn.MaxPool2d(self.reduction),
+                    nn.Dropout(dropout)
                     )
 
         super().__init__(*layers)

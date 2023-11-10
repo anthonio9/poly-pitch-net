@@ -1,5 +1,5 @@
-import poly_pitch_net as ppn
 import argparse
+import poly_pitch_net as ppn
 
 
 def parse_args():
@@ -19,4 +19,4 @@ def parse_args():
     return parser.parse_known_args()[0]
 
 
-ppn.train.run((**vars(parse_args()))
+ppn.train.run(**vars(parse_args()))

@@ -13,10 +13,10 @@ import librosa
 import torchutil
 
 
-def run(model_name: str,
+def run(model_type: str,
         gpu: int = None):
 
-    if 'mono' in model_name:
+    if 'mono' in model_type:
         EX_NAME = '_'.join([MonoPitchNet.model_name(),
                             GuitarSetPPN.dataset_name(),
                             HCQT.features_name()])
