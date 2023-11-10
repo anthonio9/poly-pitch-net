@@ -1,11 +1,22 @@
 import poly_pitch_net as ppn
+import argparse
 
 
-def main():
-    # run training
-    ppn.train.run()
+def parse_args():
+    """Parse command-line arguments"""
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--model_type',
+        type=str,
+        choices=['poly', 'mono'],
+        help='Type of the trained model, polyphonic or monophonic',
+        required=True)
+    parser.add_argument(
+        '--gpu',
+        type=int,
+        help='The index of the GPU to use for evaluation')
 
-    # run evaluation
+    return parser.parse_known_args()[0]
 
 
-main()
+ppn.train.run((**vars(parse_args()))

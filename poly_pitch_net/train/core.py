@@ -1,6 +1,7 @@
 import poly_pitch_net as ppn
 from poly_pitch_net.datasets.guitarset import GuitarSetPPN
 from poly_pitch_net.models import FretNetCrepe
+from poly_pitch_net.models import MonoPitchNet
 import amt_tools.tools
 from amt_tools.features import HCQT
 
@@ -12,10 +13,29 @@ import librosa
 import torchutil
 
 
-def run():
-    EX_NAME = '_'.join([FretNetCrepe.model_name(),
-                        GuitarSetPPN.dataset_name(),
-                        HCQT.features_name()])
+def run(model_name: str,
+        gpu: int = None):
+
+    if 'mono' in model_name:
+        EX_NAME = '_'.join([MonoPitchNet.model_name(),
+                            GuitarSetPPN.dataset_name(),
+                            HCQT.features_name()])
+
+        model = MonoPitchNet(
+                dim_in=ppn.HCQT_DIM_IN,
+                in_channels=ppn.HCQT_NO_HARMONICS,
+                no_pitch_bins=ppn.PITCH_BINS
+                )
+    else: 
+        EX_NAME = '_'.join([FretNetCrepe.model_name(),
+                            GuitarSetPPN.dataset_name(),
+                            HCQT.features_name()])
+
+        model = FretNetCrepe(
+                dim_in=ppn.HCQT_DIM_IN,
+                in_channels=ppn.HCQT_NO_HARMONICS,
+                no_pitch_bins=ppn.PITCH_BINS
+                )
 
     # Create the root directory for the experiment files
     experiment_dir = ppn.tools.misc.get_project_root().parent / '..' / 'generated' / 'experiments' / EX_NAME
@@ -26,13 +46,8 @@ def run():
     train_loader = ppn.datasets.loader('train')
     val_loader = ppn.datasets.loader('val')
 
-    model = FretNetCrepe(
-            dim_in=ppn.HCQT_DIM_IN,
-            in_channels=ppn.HCQT_NO_HARMONICS,
-            no_pitch_bins=ppn.PITCH_BINS
-            )
 
-    model.change_device(device=0)
+    model.change_device(device=gpu)
 
     print("Starting the training")
     train(train_loader, val_loader, model, model_dir)
@@ -122,7 +137,7 @@ def train(
 
     # Save final model
     torchutil.checkpoint.save(
-        log_dir / f'{step:08d}.pt',
+        log_dir / f'model_{model.model_name().lower()}_{step:08d}.pt',
         model,
         optimizer,
         step=step,

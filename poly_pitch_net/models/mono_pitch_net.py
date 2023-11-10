@@ -41,6 +41,46 @@ class MonoPitchNet(nn.module):
 
         return output
 
+    @classmethod
+    def model_name(cls):
+        """
+        Retrieve an appropriate tag, the class name, for the model.
+
+        Returns
+        ----------
+        tag : str
+          Name of the child class calling the function
+        """
+
+        tag = cls.__name__
+
+        return tag
+
+    def change_device(self, device=None):
+        """
+        Change the device and load the model onto the new device.
+
+        Parameters
+        ----------
+        device : string, int or None, optional (default None)
+          Device to load model onto
+        """
+
+        if device is None:
+            # If the function is called without a device, use the current device
+            device = self.device
+
+        if isinstance(device, int):
+            # If device is an integer, assume device represents GPU number
+            device = torch.device(f'cuda:{device}'
+                                  if torch.cuda.is_available() else 'cpu')
+
+        # Change device field
+        self.device = device
+        # Load the transcription model onto the device
+        self.to(self.device)
+
+
 
 class MonoPitchBlock(nn.Sequential):
 
