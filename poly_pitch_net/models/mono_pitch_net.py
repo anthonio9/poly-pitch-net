@@ -56,13 +56,15 @@ class MonoPitchNet1D(nn.Module):
         """
         # transform [B, T, C] into [B, C, T]
         input = input.permute(0, 2, 1)
-        output = self.conv1(input)
-        output = self.conv2(output)
-        output = self.conv3(output)
-        output = self.pitch_head(output)
+        embeddings = self.conv1(input)
+        embeddings = self.conv2(embeddings)
+        embeddings = self.conv3(embeddings)
+        embeddings = self.pitch_head(embeddings)
 
-        # transform [B, O, T] into [B, T, O]
-        output = output.permute(0, 2, 1)
+        # Initialize an empty dictionary to hold output
+        output = dict()
+
+        output[ppn.KEY_PITCH_LOGITS] = embeddings
 
         return output
 

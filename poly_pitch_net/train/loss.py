@@ -45,8 +45,20 @@ def poly_pitch_loss(logits, pitch):
 
 
 def mono_pitch_loss(logits, pitch):
-    # reshape [B, O, T] ==> [B, T, O]
-    pass
+    breakpoint()
+    # transform logits of shape [B, O, T] into [B, T, O]
+    logits = logits.permute(0, 2, 1).reshape(-1, ppn.PITCH_BINS)
+
+    # start with a simple pitch_bins vector, make it one-hot
+    pitch_bins = ppn.tools.frequency_to_bins(pitch)
+    pitch_bins_1hot = torch.nn.functional.one_hot(pitch_bins, ppn.PITCH_BINS)
+
+    pitch_bins_1hot = pitch_bins_1hot.float()
+    
+    # Compute binary cross-entropy loss
+    return torch.nn.functional.binary_cross_entropy_with_logits(
+            logits,
+            pitch_bins)
 
 
 def loss(model, logits, pitch, pitch_names=None):

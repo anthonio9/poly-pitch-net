@@ -16,7 +16,7 @@ import torchutil
 def run(model_type: str,
         gpu: int = None):
 
-    if 'mono' in model_type:
+    if 'mono1d' in model_type:
         EX_NAME = '_'.join([MonoPitchNet1D.model_name(),
                             GuitarSetPPN.dataset_name(),
                             HCQT.features_name()])
@@ -26,7 +26,8 @@ def run(model_type: str,
                 in_channels=ppn.HCQT_NO_HARMONICS,
                 no_pitch_bins=ppn.PITCH_BINS
                 )
-    else: 
+
+    elif 'poly' in model_type:
         EX_NAME = '_'.join([FretNetCrepe.model_name(),
                             GuitarSetPPN.dataset_name(),
                             HCQT.features_name()])
@@ -36,6 +37,10 @@ def run(model_type: str,
                 in_channels=ppn.HCQT_NO_HARMONICS,
                 no_pitch_bins=ppn.PITCH_BINS
                 )
+
+    else:
+        print(f"{model_type} is not supported!")
+        return
 
     # Create the root directory for the experiment files
     experiment_dir = ppn.tools.misc.get_project_root().parent / '..' / 'generated' / 'experiments' / EX_NAME
@@ -88,6 +93,14 @@ def train(
             # Unpack batch
             features = batch[ppn.KEY_FEATURES]
             pitch_array = batch[ppn.KEY_PITCH_ARRAY]
+
+            if 'mono1d' in model.model_name():
+                # choose HCQT channel 0
+                features = features[:, 0, :, :]
+
+                # choose string 3
+                pitch_array = pitch_array[:, 3, :]
+
 
             with torch.autocast(model.device.type):
 
@@ -158,6 +171,13 @@ def evaluate(
         for batch in loader:
             features = batch[ppn.KEY_FEATURES].to(device=model.device)
             pitch_array = batch[ppn.KEY_PITCH_ARRAY].to(device=model.device)
+
+            if 'mono1d' in model.model_name():
+                # choose HCQT channel 0
+                features = features[:, 0, :, :]
+
+                # choose string 3
+                pitch_array = pitch_array[:, 3, :]
 
             # set the pitch names to something
             output = model(features)
