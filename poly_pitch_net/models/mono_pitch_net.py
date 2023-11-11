@@ -61,6 +61,9 @@ class MonoPitchNet1D(nn.Module):
         output = self.conv3(output)
         output = self.pitch_head(output)
 
+        # transform [B, O, T] into [B, T, O]
+        output = output.permute(0, 2, 1)
+
         return output
 
     @classmethod

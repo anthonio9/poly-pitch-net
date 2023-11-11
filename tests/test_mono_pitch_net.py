@@ -25,7 +25,9 @@ def test_mpn_forward():
     output = model(features)
 
     expected_shape = [batch_size,
-                      no_pitch_bins,
-                      no_frames]
+                      no_frames,
+                      no_pitch_bins]
+
+    print(f"output.shape: {output.shape}")
 
     assert list(output.shape) == expected_shape
