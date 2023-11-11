@@ -1,8 +1,9 @@
 import poly_pitch_net as ppn
 import torch.nn as nn
+import torch
 
 
-class MonoPitchNet(nn.Module):
+class MonoPitchNet1D(nn.Module):
     """A small model focused on guitar pitch recognition. 
 
     The purpose of the model is to recognize pitch from one string only, 
@@ -10,32 +11,51 @@ class MonoPitchNet(nn.Module):
 
     The main aim is to use this model as means of understanding the issues with the larger 
     PolyPitchNet model. First undrestand, then fix them.
+
+    MonoPitchNet is expecting only one block of CQT / STFT per time step.
     """
 
-    def __init__(self, dim_in: int, in_channels: int, no_pitch_bins: int=360):
+    def __init__(self, dim_in: int, no_pitch_bins: int=360):
         """Initialize all components of MonoPitchNet model.
 
         Args:
-            dim_in (int): number of frequency bins per block of the provided input data.
-            in_channels (int): number of the input channels of the first conv2d layer.
+            dim_in (int): number of frequency bins per block of the provided input data,
+            this is also the number of channels in the first Conv1d layer.
             no_pitch_bins (int): number of the output pitch bins logits, defaults to 360.
         """
 
         nn.Module.__init__(self)
 
-        self.dim_int = dim_in
-        self.in_channels = in_channels
+        self.dim_in = dim_in
         self.no_pitch_bins = no_pitch_bins
 
-        self.conv1 = MonoPitchBlock(in_channels, 256)
-        self.conv2 = MonoPitchBlock(256, 32, reduction=2)
-        self.conv3 = MonoPitchBlock(32, 128, reduction=2, dropout=0.25)
+        self.conv1 = MonoPitchBlock1D(self.dim_in, 256)
+        self.conv2 = MonoPitchBlock1D(256, 32)
+        self.conv3 = MonoPitchBlock1D(32, 128)
 
         self.pitch_head = nn.Conv1d(
-                128 * dim_in // self.conv2.reduction // self.conv3.reduction,
+                128,
                 no_pitch_bins, 1)
 
     def forward(self, input):
+        """Process data and input pitch logits.
+
+        Run through the Conv1d layers of pitch ned, to finally pass through
+        the pitch head which output pitch logits. 
+        
+        Args:
+            input (tensor [B, T, C]) - CQT / STFT blocks,
+
+        Returns:
+            output (tensor [B, T, O]) - pitch logits
+
+        B - batch size,
+        T - number of the time frames
+        C - number of the CQT / STFT bins, given in the init function
+        O - number of pitch bins, given in the init function
+        """
+        # transform [B, T, C] into [B, C, T]
+        input = input.permute(0, 2, 1)
         output = self.conv1(input)
         output = self.conv2(output)
         output = self.conv3(output)
@@ -84,35 +104,24 @@ class MonoPitchNet(nn.Module):
 
 
 
-class MonoPitchBlock(nn.Sequential):
+class MonoPitchBlock1D(nn.Sequential):
 
     def __init__(
             self,
             in_channels: int,
             out_channels: int,
-            kernel_size: tuple[int, int]=(3, 3),
-            padding: tuple[int, int]=(1, 1),
-            dilation: tuple[int, int]=(1, 1),
-            reduction: int=None,
-            dropout: float=0.5,
+            kernel_size: int=3,
+            padding: int=1,
+            dilation: int=1,
             ):
         layers = (
-                nn.Conv2d(in_channels,
-                          out_channels, 
+                nn.Conv1d(in_channels=in_channels,
+                          out_channels=out_channels, 
                           kernel_size=kernel_size,
                           padding=padding,
                           dilation=dilation),
-                nn.BatchNorm2d(out_channels),
+                nn.BatchNorm1d(out_channels),
                 nn.ReLU()
                 )
-
-        self.reduction = 1
-
-        if reduction is not None:
-            self.reduction = reduction
-            layers += (
-                    nn.MaxPool2d(self.reduction),
-                    nn.Dropout(dropout)
-                    )
 
         super().__init__(*layers)

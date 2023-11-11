@@ -1,7 +1,7 @@
 import poly_pitch_net as ppn
 from poly_pitch_net.datasets.guitarset import GuitarSetPPN
 from poly_pitch_net.models import FretNetCrepe
-from poly_pitch_net.models import MonoPitchNet
+from poly_pitch_net.models import MonoPitchNet1D
 import amt_tools.tools
 from amt_tools.features import HCQT
 
@@ -17,11 +17,11 @@ def run(model_type: str,
         gpu: int = None):
 
     if 'mono' in model_type:
-        EX_NAME = '_'.join([MonoPitchNet.model_name(),
+        EX_NAME = '_'.join([MonoPitchNet1D.model_name(),
                             GuitarSetPPN.dataset_name(),
                             HCQT.features_name()])
 
-        model = MonoPitchNet(
+        model = MonoPitchNet1D(
                 dim_in=ppn.HCQT_DIM_IN,
                 in_channels=ppn.HCQT_NO_HARMONICS,
                 no_pitch_bins=ppn.PITCH_BINS
@@ -95,7 +95,7 @@ def train(
                 output = model(features.to(model.device))
 
                 # Compute losses
-                loss = ppn.train.loss(output[ppn.KEY_PITCH_LOGITS], pitch_array.to(model.device))
+                loss = ppn.train.loss(model, output[ppn.KEY_PITCH_LOGITS], pitch_array.to(model.device))
                 train_losses.append(loss.item())
 
             # Zero the accumulated gradients
@@ -163,7 +163,7 @@ def evaluate(
             output = model(features)
 
             # Compute losses
-            loss = ppn.train.loss(output[ppn.KEY_PITCH_LOGITS], pitch_array)
+            loss = ppn.train.loss(model, output[ppn.KEY_PITCH_LOGITS], pitch_array)
 
             eval_losses.append(loss.item())
 
