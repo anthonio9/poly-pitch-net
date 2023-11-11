@@ -23,7 +23,6 @@ def run(model_type: str,
 
         model = MonoPitchNet1D(
                 dim_in=ppn.HCQT_DIM_IN,
-                in_channels=ppn.HCQT_NO_HARMONICS,
                 no_pitch_bins=ppn.PITCH_BINS
                 )
 
@@ -94,7 +93,7 @@ def train(
             features = batch[ppn.KEY_FEATURES]
             pitch_array = batch[ppn.KEY_PITCH_ARRAY]
 
-            if 'mono1d' in model.model_name():
+            if 'MonoPitchNet1D' in model.model_name():
                 # choose HCQT channel 0
                 features = features[:, 0, :, :]
 

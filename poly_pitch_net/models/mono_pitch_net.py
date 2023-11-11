@@ -44,18 +44,16 @@ class MonoPitchNet1D(nn.Module):
         the pitch head which output pitch logits. 
         
         Args:
-            input (tensor [B, T, C]) - CQT / STFT blocks,
+            input (tensor [B, C, T]) - CQT / STFT blocks,
 
         Returns:
-            output (tensor [B, T, O]) - pitch logits
+            output (tensor [B, O, T]) - pitch logits
 
         B - batch size,
         T - number of the time frames
         C - number of the CQT / STFT bins, given in the init function
         O - number of pitch bins, given in the init function
         """
-        # transform [B, T, C] into [B, C, T]
-        input = input.permute(0, 2, 1)
         embeddings = self.conv1(input)
         embeddings = self.conv2(embeddings)
         embeddings = self.conv3(embeddings)

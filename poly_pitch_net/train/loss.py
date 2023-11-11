@@ -58,7 +58,7 @@ def mono_pitch_loss(logits, pitch):
     # Compute binary cross-entropy loss
     return torch.nn.functional.binary_cross_entropy_with_logits(
             logits,
-            pitch_bins)
+            pitch_bins_1hot)
 
 
 def loss(model, logits, pitch, pitch_names=None):
@@ -80,5 +80,5 @@ def loss(model, logits, pitch, pitch_names=None):
     if 'FretNetCrepe' in model.model_name():
         return poly_pitch_loss(logits, pitch)
     
-    if 'mono' in model.model_name():
+    if 'MonoPitchNet1D' in model.model_name():
         return mono_pitch_loss(logits, pitch)
