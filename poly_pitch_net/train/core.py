@@ -171,7 +171,7 @@ def evaluate(
             features = batch[ppn.KEY_FEATURES].to(device=model.device)
             pitch_array = batch[ppn.KEY_PITCH_ARRAY].to(device=model.device)
 
-            if 'mono1d' in model.model_name():
+            if 'MonoPitchNet1D' in model.model_name():
                 # choose HCQT channel 0
                 features = features[:, 0, :, :]
 

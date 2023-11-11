@@ -16,11 +16,17 @@ def run_evaluation(
         print(f"Given model path '{model_path}' does not exist.")
         return 1
 
-    model = FretNetCrepe(
-            dim_in=ppn.HCQT_DIM_IN,
-            in_channels=ppn.HCQT_NO_HARMONICS,
-            no_pitch_bins=ppn.PITCH_BINS
-            )
+    if 'monopitchnet1d' in model_type:
+        model = MonoPitchNet1D(
+                dim_in=ppn.HCQT_DIM_IN,
+                no_pitch_bins=ppn.PITCH_BINS
+                )
+    else:
+        model = FretNetCrepe(
+                dim_in=ppn.HCQT_DIM_IN,
+                in_channels=ppn.HCQT_NO_HARMONICS,
+                no_pitch_bins=ppn.PITCH_BINS
+                )
 
     # create the optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=ppn.LEARNING_RATE)
@@ -38,6 +44,14 @@ def run_evaluation(
     with torch.no_grad():
         model.change_device(gpu)
         features = batch[ppn.KEY_FEATURES].to(model.device)
+
+        if 'MonoPitchNet1D' in model.model_name():
+            # choose HCQT channel 0
+            features = features[:, 0, :, :]
+
+            # choose string 3
+            pitch_array = pitch_array[:, 3, :]
+
         output = model(features)
         output[ppn.KEY_PITCH_LOGITS] = torch.nn.functional.sigmoid(output[ppn.KEY_PITCH_LOGITS])
         output = model.post_proc(output)
