@@ -88,3 +88,33 @@ def plot_poly_pitch(
     ax.legend(proxies, string_labels, bbox_to_anchor=(1.01, 1),
                          loc='upper left', borderaxespad=0.)
     plt.show()
+
+
+def plot_mono_pitch(
+    freq, 
+    pitch_hat, 
+    times, 
+    pitch_gt=None):
+    """Plot mono pitch with ground truth
+
+    Args:
+        freq (numpy array)
+            Spectrogram or different kind of transform
+            Should be of shape [F, T]
+        pitch_hat (numpy array)
+            Array with predicted pitch values in Hz from one string
+            Should be of shape [T]
+        times (numpy array)
+            Array with time interval labels (in sec)
+            Should be of shape [T]
+        pitch_gt (numpy array)
+            Array with ground truth pitch values in Hz from one string
+            Should be of shape [T]
+    """
+    assert len(pitch_hat.shape) == 1
+    assert len(pitch_gt.shape) == 1
+
+    pitch_hat = np.expand_dims(pitch_hat, axis=0)
+    pitch_gt = np.expand_dims(pitch_gt, axis=0)
+
+    plot_poly_pitch(freq, pitch_hat, times, pitch_gt)

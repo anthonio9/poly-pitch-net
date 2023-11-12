@@ -66,6 +66,11 @@ def run_evaluation(
     pitch = output[ppn.KEY_PITCH_WG_AVG].cpu().numpy()[0, :, :]
     pitch = ppn.tools.convert.cents_to_frequency(pitch)
 
+    if 'MonoPitchNet1D' in model.model_name():
+        # choose string 3
+        pitch = pitch[3, :]
+        pitch_gt  = pitch_gt[3, :]
+
     ppn.evaluate.plot_poly_pitch(freq=features,
                                  pitch_hat=pitch,
                                  pitch_gt=pitch_gt,

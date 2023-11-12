@@ -38,9 +38,18 @@ def test_accuracy(metrics_config):
 
 
 def test_rmse(metrics_config):
-    target_cents, pred_cents, threshold = metrics_config
+    target_cents, pred_cents, _ = metrics_config
 
     rmse = ppn.evaluate.metrics.RMSE()
     rmse.update(pred_cents, target_cents)
 
     print(rmse())
+
+
+def test_rpa(metrics_config):
+    target_cents, pred_cents, threshold = metrics_config
+
+    rpa = ppn.evaluate.metrics.RPA(threshold)
+    rpa.update(pred_cents, target_cents)
+
+    print(rpa())

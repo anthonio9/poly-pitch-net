@@ -84,6 +84,7 @@ KEY_TIMES = 'times'
 KEY_TRACK = 'track'
 KEY_MULTIPITCH = 'multi_pitch'
 KEY_PITCH_ARRAY = 'pitch_array'
+KEY_PITCH_ARRAY_CENTS = 'pitch_array_cents'
 KEY_FEATURES = 'features'
 
 ###############################################################################

@@ -1,4 +1,7 @@
 from pathlib import Path
+import torch
+
+import poly_pitch_net as ppn
 
 
 def get_project_root() -> Path:
@@ -7,4 +10,4 @@ def get_project_root() -> Path:
 
 def cents(a, b):
     """Compute pitch difference in cents"""
-    return penn.OCTAVE * torch.log2(a / b)
+    return ppn.OCTAVE * torch.log2(a / b)

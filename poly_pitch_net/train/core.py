@@ -128,19 +128,21 @@ def train(
 
         train_losses = sum(train_losses) / len(train_losses)
 
-        # log the trian loss
+        # log the train loss
         writer.add_scalar(tag='train_loss_' + ppn.LOSS_BCE, 
                           scalar_value=train_losses, 
                           global_step=step)
         tloss_log.set_description(f"Train loss: {train_losses}")
 
 
-        eval_loss = evaluate(val_loader, model)
+        eval_loss, metric_dict = evaluate(val_loader, model)
 
         # log the evaluation loss
         writer.add_scalar(tag='eval_loss_' + ppn.LOSS_BCE,
                           scalar_value=eval_loss,
                           global_step=step)
+        write_metrics(writer, step, metric_dict)
+
         eloss_log.set_description(f"Evaluation loss: {eval_loss}")
 
         epoch += 1
@@ -156,6 +158,14 @@ def train(
         epoch=epoch)
 
 
+def write_metrics(writer: SummaryWriter, step: int, metrics: dict):
+    # log the evaluation loss
+    for key, val in metrics.items():
+        writer.add_scalar(tag='eval_' + key,
+                          scalar_value=val,
+                          global_step=step)
+
+
 def evaluate(
         loader: torch.utils.data.DataLoader,
         model):
@@ -163,6 +173,7 @@ def evaluate(
     Perform model evaluation.
     """
     eval_losses = []
+    metrics = ppn.evaluate.metrics.Metrics(20)
 
     with torch.no_grad():
         model.eval()
@@ -181,6 +192,13 @@ def evaluate(
             # set the pitch names to something
             output = model(features)
 
+            # process into pitch cents
+            output = model.post_proc(output)
+
+            # get metrics
+            metrics.update(output[ppn.KEY_PITCH_ARRAY_CENTS],
+                           ppn.tools.frequency_to_cents(pitch_array))
+
             # Compute losses
             loss = ppn.train.loss(model, output[ppn.KEY_PITCH_LOGITS], pitch_array)
 
@@ -188,4 +206,4 @@ def evaluate(
 
     eval_losses = sum(eval_losses) / len(eval_losses)
 
-    return eval_losses
+    return eval_losses, metric.get_metrics()
