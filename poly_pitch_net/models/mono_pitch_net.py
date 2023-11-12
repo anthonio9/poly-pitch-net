@@ -79,7 +79,7 @@ class MonoPitchNet1D(nn.Module):
 
         # this should be of shape [B, T]
         pitch_bins = logits.argmax(dim=-1)
-        assert list(pitch_bins.shape) = logits.shape[:-1]
+        assert pitch_bins.shape == logits.shape[:-1]
 
         pitch_cents = ppn.tools.convert.bins_to_cents(pitch_bins)
         input[ppn.KEY_PITCH_ARRAY_CENTS] = pitch_cents

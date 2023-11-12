@@ -1,6 +1,7 @@
 import amt_tools.tools
 import poly_pitch_net as ppn
 from poly_pitch_net.models import FretNetCrepe
+from poly_pitch_net.models import MonoPitchNet1D
 
 from pathlib import Path
 import torch
@@ -16,7 +17,7 @@ def run_evaluation(
         print(f"Given model path '{model_path}' does not exist.")
         return 1
 
-    if 'monopitchnet1d' in model_type:
+    if 'monopitchnet1d' in model_path.stem:
         model = MonoPitchNet1D(
                 dim_in=ppn.HCQT_DIM_IN,
                 no_pitch_bins=ppn.PITCH_BINS
@@ -49,9 +50,6 @@ def run_evaluation(
             # choose HCQT channel 0
             features = features[:, 0, :, :]
 
-            # choose string 3
-            pitch_array = pitch_array[:, 3, :]
-
         output = model(features)
         output[ppn.KEY_PITCH_LOGITS] = torch.nn.functional.sigmoid(output[ppn.KEY_PITCH_LOGITS])
         output = model.post_proc(output)
@@ -63,17 +61,23 @@ def run_evaluation(
     pitch_gt = batch[ppn.KEY_PITCH_ARRAY].cpu().numpy()[0, :, :]
     times = batch[ppn.KEY_TIMES].cpu().numpy()[0, :]
 
-    pitch = output[ppn.KEY_PITCH_WG_AVG].cpu().numpy()[0, :, :]
-    pitch = ppn.tools.convert.cents_to_frequency(pitch)
-
     if 'MonoPitchNet1D' in model.model_name():
         # choose string 3
-        pitch = pitch[3, :]
-        pitch_gt  = pitch_gt[3, :]
+        pitch = output[ppn.KEY_PITCH_ARRAY_CENTS].cpu().numpy()[3, :]
+        pitch = ppn.tools.convert.cents_to_frequency(pitch)
+        pitch_gt = pitch_gt[3, :]
 
-    ppn.evaluate.plot_poly_pitch(freq=features,
-                                 pitch_hat=pitch,
-                                 pitch_gt=pitch_gt,
-                                 times=times)
+        ppn.evaluate.plot_mono_pitch(freq=features,
+                                     pitch_hat=pitch,
+                                     pitch_gt=pitch_gt,
+                                     times=times)
+    else:
+        pitch = output[ppn.KEY_PITCH_WG_AVG].cpu().numpy()[0, :, :]
+        pitch = ppn.tools.convert.cents_to_frequency(pitch)
+
+        ppn.evaluate.plot_poly_pitch(freq=features,
+                                     pitch_hat=pitch,
+                                     pitch_gt=pitch_gt,
+                                     times=times)
     
 
