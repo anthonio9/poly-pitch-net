@@ -86,7 +86,9 @@ def mono_pitch_loss(logits, pitch, register_silence=False):
     logits = logits.permute(0, 2, 1).reshape(-1, ppn.PITCH_BINS)
 
     # start with a simple pitch_bins vector, make it one-hot
-    pitch_bins = ppn.tools.frequency_to_bins(pitch)
+    pitch_bins = ppn.tools.frequency_to_bins(
+            pitch, 
+            register_silence=register_silence)
 
     if register_silence:
         pitch_bins_1hot = onehot_with_silence(pitch_bins, ppn.PITCH_BINS, torch.tensor(0))
