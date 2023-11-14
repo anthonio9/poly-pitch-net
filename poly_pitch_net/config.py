@@ -75,6 +75,8 @@ HCQT_NO_HARMONICS = 6
 KEY_PITCH_WG_AVG = 'pitch_wg_average'
 KEY_PITCH_CENTERS = 'pitch_centers'
 KEY_PITCH_LOGITS = 'pitch_logits'
+KEY_PITCH_ARRAY_CENTS = 'pitch_array_cents'
+KEY_PITCH_ARRAY_HZ = 'pitch_array_hz'
 
 # guitarset
 KEY_FS = 'fs'
@@ -84,7 +86,6 @@ KEY_TIMES = 'times'
 KEY_TRACK = 'track'
 KEY_MULTIPITCH = 'multi_pitch'
 KEY_PITCH_ARRAY = 'pitch_array'
-KEY_PITCH_ARRAY_CENTS = 'pitch_array_cents'
 KEY_FEATURES = 'features'
 
 ###############################################################################

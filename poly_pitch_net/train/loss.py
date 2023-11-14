@@ -63,6 +63,7 @@ def onehot_with_ignore_label(labels, num_class, ignore_label):
 
 
 def onehot_with_silence(labels, num_class, silence_label=torch.tensor(0)):
+    """This has to work"""
     labels_with_silence = num_class + 1
 
     # set the mask for the silence labels
@@ -80,13 +81,17 @@ def onehot_with_silence(labels, num_class, silence_label=torch.tensor(0)):
     return one_hot_labels
 
 
-def mono_pitch_loss(logits, pitch):
+def mono_pitch_loss(logits, pitch, register_silence=False):
     # transform logits of shape [B, O, T] into [B, T, O]
     logits = logits.permute(0, 2, 1).reshape(-1, ppn.PITCH_BINS)
 
     # start with a simple pitch_bins vector, make it one-hot
     pitch_bins = ppn.tools.frequency_to_bins(pitch)
-    pitch_bins_1hot = onehot_with_ignore_label(pitch_bins, ppn.PITCH_BINS, torch.tensor(0))
+
+    if register_silence:
+        pitch_bins_1hot = onehot_with_silence(pitch_bins, ppn.PITCH_BINS, torch.tensor(0))
+    else:
+        pitch_bins_1hot = onehot_with_ignore_label(pitch_bins, ppn.PITCH_BINS, torch.tensor(0))
 
     pitch_bins_1hot = pitch_bins_1hot.float()
     pitch_bins_1hot = pitch_bins_1hot.reshape(-1, ppn.PITCH_BINS)
@@ -114,7 +119,7 @@ def loss(model, logits, pitch, pitch_names=None):
     # breakpoint()
 
     if 'FretNetCrepe' in model.model_name():
-        return poly_pitch_loss(logits, pitch)
+        return poly_pitch_loss(logits, pitch, model.register_silence)
     
     if 'MonoPitchNet1D' in model.model_name():
-        return mono_pitch_loss(logits, pitch)
+        return mono_pitch_loss(logits, pitch, model.register_silence)

@@ -2,15 +2,25 @@ import poly_pitch_net as ppn
 import torch
 
 
-def bins_to_cents(bins):
+def bins_to_cents(bins, register_silence=False):
     """Converts pitch bins to cents"""
     # return penn.CENTS_PER_BIN * bins
-    return ppn.CENTS_PER_BIN * bins
+    cents = ppn.CENTS_PER_BIN * bins
+
+    if register_silence:
+        cents[bins == ppn.PITCH_BINS] = -1000000
+
+    return cents
 
 
-def frequency_to_cents(frequency):
+def frequency_to_cents(frequency, register_silence=False):
     """Convert frequency in Hz to cents"""
-    return ppn.OCTAVE * torch.log2(frequency / ppn.FMIN)
+    cents = ppn.OCTAVE * torch.log2(frequency / ppn.FMIN)
+
+    if register_silence:
+        cents[frequency == 0] = -1000000
+
+    return cents
 
 
 def cents_to_frequency(cents):
@@ -26,6 +36,21 @@ def cents_to_bins(cents, quantize_fn=torch.floor):
     return bins
 
 
-def frequency_to_bins(frequency, quantize_fn=torch.floor):
+def frequency_to_bins(frequency, quantize_fn=torch.floor, register_silence=False):
     """Convert frequency in Hz to pitch bins"""
-    return cents_to_bins(frequency_to_cents(frequency), quantize_fn)
+    bins = cents_to_bins(frequency_to_cents(frequency), quantize_fn)
+
+    if register_silence:
+        bins[frequency == 0] = ppn.PITCH_BINS
+
+    return bins
+
+
+def bins_to_frequency(bins, register_silence=False):
+    frequency = cents_to_frequency(bins_to_cents(bins))
+
+    if register_silence:
+        # set the last bins class to 0, this means silence
+        frequency[bins == ppn.PITCH_BINS] = 0
+
+    return frequency

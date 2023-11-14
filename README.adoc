@@ -28,13 +28,19 @@ If any errors related to missing dictionary keys occur, make sure that the `rese
 .run the training script
 [source, shell]
 ----
-python3 poly_pitch_net_experiments/experiment_fretnet_cnn.py
+python3 -m poly_pitch_net/train --model_type='poly' --gpu=0
 ----
 
 .run the training script with nohup
 [source, shell]
 ----
-nohup python3 poly_pitch_net_experiments/experiment_fretnet_cnn.py > output.txt 2>&1 &
+nohup python3 -m poly_pitch_net/train --model_type='poly' --gpu=0 > output.txt 2>&1 &
+----
+
+.run the evaluation script
+[source, shell]
+----
+python3 -m poly_pitch_net/evaluate --model_path=/path/to/model.pt --gpu=0
 ----
 
 == Tests

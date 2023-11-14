@@ -15,19 +15,22 @@ class MonoPitchNet1D(nn.Module):
     MonoPitchNet is expecting only one block of CQT / STFT per time step.
     """
 
-    def __init__(self, dim_in: int, no_pitch_bins: int=360):
+    def __init__(self, dim_in: int, no_pitch_bins: int=360,
+                 register_silence: bool=False):
         """Initialize all components of MonoPitchNet model.
 
         Args:
             dim_in (int): number of frequency bins per block of the provided input data,
             this is also the number of channels in the first Conv1d layer.
             no_pitch_bins (int): number of the output pitch bins logits, defaults to 360.
+            register_silence (bool): register_silence (True) with the model or not (False)
         """
 
         nn.Module.__init__(self)
 
         self.dim_in = dim_in
         self.no_pitch_bins = no_pitch_bins
+        self.register_silence = register_silence
 
         self.conv1 = MonoPitchBlock1D(self.dim_in, 256)
         self.conv2 = MonoPitchBlock1D(256, 32)
@@ -35,7 +38,7 @@ class MonoPitchNet1D(nn.Module):
 
         self.pitch_head = nn.Conv1d(
                 128,
-                no_pitch_bins, 1)
+                no_pitch_bins + int(register_silence), 1)
 
     def forward(self, input):
         """Process data and input pitch logits.
@@ -82,7 +85,9 @@ class MonoPitchNet1D(nn.Module):
         assert pitch_bins.shape == logits.shape[:-1]
 
         pitch_cents = ppn.tools.convert.bins_to_cents(pitch_bins)
+        pitch_hz = ppn.tools.convert.bins_to_frequency(pitch_bins, register_silence=True)
         input[ppn.KEY_PITCH_ARRAY_CENTS] = pitch_cents
+        input[ppn.KEY_PITCH_ARRAY_HZ] = pitch_hz
 
         return input
 

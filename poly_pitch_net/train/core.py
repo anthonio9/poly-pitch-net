@@ -14,7 +14,8 @@ import torchutil
 
 
 def run(model_type: str,
-        gpu: int = None):
+        gpu: int = None, 
+        register_silence: bool = False):
 
     if 'mono1d' in model_type:
         EX_NAME = '_'.join([MonoPitchNet1D.model_name(),
@@ -23,7 +24,8 @@ def run(model_type: str,
 
         model = MonoPitchNet1D(
                 dim_in=ppn.HCQT_DIM_IN,
-                no_pitch_bins=ppn.PITCH_BINS
+                no_pitch_bins=ppn.PITCH_BINS,
+                register_silence=register_silence
                 )
 
     elif 'poly' in model_type:
@@ -197,7 +199,8 @@ def evaluate(
 
             # get metrics
             metrics.update(output[ppn.KEY_PITCH_ARRAY_CENTS],
-                           ppn.tools.frequency_to_cents(pitch_array))
+                           ppn.tools.frequency_to_cents(pitch_array, 
+                                                        register_silence=True))
 
             # Compute losses
             loss = ppn.train.loss(model, output[ppn.KEY_PITCH_LOGITS], pitch_array)
