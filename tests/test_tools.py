@@ -137,3 +137,13 @@ def test_guitarset_ungzip_val():
             succed += 1
     
     print(f"ungzip success with {succed} files!")
+
+
+def test_freq_to_bins_conversion():
+    freq = [0, 120, 300, 0]
+    freq = torch.tensor(freq)
+
+    bins = ppn.tools.frequency_to_bins(freq, register_silence=True)
+
+    assert bins[0] == ppn.PITCH_BINS
+    assert bins[3] == ppn.PITCH_BINS
