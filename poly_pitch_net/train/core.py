@@ -198,6 +198,7 @@ def evaluate(
             output = model.post_proc(output)
 
             # get metrics
+            breakpoint()
             metrics.update(output[ppn.KEY_PITCH_ARRAY_CENTS],
                            ppn.tools.frequency_to_cents(pitch_array, 
                                                         register_silence=True))
