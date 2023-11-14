@@ -8,7 +8,7 @@ import torch
 import random
 
 
-def loader(partition: str='train', seed: int=None):
+def loader(partition: str='train', seed: int=None, data_proc_type: str='HCQT'):
     """
     Prepare a GuitarSetPPN data loader.
     """
@@ -34,14 +34,17 @@ def loader(partition: str='train', seed: int=None):
         dataset_seed = seed
         dataset_splits = splits
 
-    # Create an HCQT feature extraction module comprising
-    # the first five harmonics and a sub-harmonic, where each
-    # harmonic transform spans 4 octaves w/ 3 bins per semitone
-    data_proc = HCQT(sample_rate=ppn.GSET_SAMPLE_RATE,
-                     hop_length=ppn.GSET_HOP_LEN,
-                     fmin=librosa.note_to_hz('E2'),
-                     harmonics=[0.5, 1, 2, 3, 4, 5],
-                     n_bins=144, bins_per_octave=36)
+    if data_proc_type is 'HCQT':
+        # Create an HCQT feature extraction module comprising
+        # the first five harmonics and a sub-harmonic, where each
+        # harmonic transform spans 4 octaves w/ 3 bins per semitone
+        data_proc = HCQT(sample_rate=ppn.GSET_SAMPLE_RATE,
+                         hop_length=ppn.GSET_HOP_LEN,
+                         fmin=librosa.note_to_hz('E2'),
+                         harmonics=[0.5, 1, 2, 3, 4, 5],
+                         n_bins=144, bins_per_octave=36)
+    else:
+        data_proc = None
 
     profile = amt_tools.tools.GuitarProfile(num_frets=19)
 

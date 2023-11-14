@@ -2,11 +2,24 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
 import numpy as np
+import librosa
 
 import poly_pitch_net as ppn
 
 
 def pitch_to_lines(pitch_array, times, linestyle='solid', label='String'):
+    """Create pitch lines
+
+    Args
+        pitch_array (numpy array)
+            Predicted pitch array of shape [C, T]. One string arrays are supported,
+            just make sure that the shape is correct, for one string [1, T]
+        times (numpy array) 
+            Array with timestamps, shape [T]
+    """
+    assert len(pitch_array.shape) == 2
+    assert len(times.shape) == 1
+
     # replace 0s with -1 (for masking later)
     pitch_array[pitch_array == 0] = -1
 
@@ -20,6 +33,7 @@ def pitch_to_lines(pitch_array, times, linestyle='solid', label='String'):
     # *colors* is sequence of rgba tuples.
     # colors copied from rcParams['axes.prop_cycle']
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+    colors = colors[:pitch_array.shape[0]]
 
     # *linestyle* is a string or dash tuple. Legal string values are
     # solid|dashed|dashdot|dotted.  The dash tuple is (offset, onoffseq) where
@@ -39,6 +53,7 @@ def pitch_to_lines(pitch_array, times, linestyle='solid', label='String'):
     return lines, proxies, string_labels
 
 
+
 def plot_poly_pitch(
         freq, 
         pitch_hat, 
@@ -46,14 +61,46 @@ def plot_poly_pitch(
         pitch_gt=None):
     """
     Plot the pitch on the frequency graph with matplotlib.
+
+    Args:
+        freq (numpy array)
+            Spectrogram array, of shape [F, T]
+        pitch_hat (numpy array)
+            Predicted pitch array of shape [C, T]. One string arrays are supported,
+            just make sure that the shape is correct, for one string [1, T]
+        times (numpy array) 
+            Array with timestamps, shape [T]
+        pitch_gt (numpy array)
+            Optional array with target pitch, shape [C, T]
+
+        F - number of the frequency bins
+        C - number of the guitar strings
+        T - number of the time stamps
     """
+    assert len(freq.shape) == 2
+    assert len(pitch_hat.shape) == 2
+    assert len(times.shape) == 1
+
+    breakpoint()
+
+    fig, ax = plt.subplots()
+
+    # plot spectrogram
+    hop_length = ppn.GSET_HOP_LEN 
+    dB = freq
+    img = librosa.display.specshow(dB, y_axis='linear', x_axis='time',
+                                   sr=ppn.GSET_SAMPLE_RATE, ax=ax, x_coords=times)
+
     # get the min and max of the pitch values
     pitch_hat_no_zeros = pitch_hat.flatten()
     pitch_hat_no_zeros = pitch_hat_no_zeros[pitch_hat_no_zeros != 0]
-    mins = [pitch_hat_no_zeros.min()]
-    maxs = [pitch_hat_no_zeros.max()]
 
-    fig, ax = plt.subplots()
+    try:
+        mins = [pitch_hat_no_zeros.min()]
+        maxs = [pitch_hat_no_zeros.max()]
+    except ValueError:
+        mins = [0]
+        maxs = [ppn.GSET_SAMPLE_RATE // 2]
 
     lines, proxies, string_labels = pitch_to_lines(pitch_hat, times, linestyle='dashed')
     ax.add_collection(lines)
@@ -80,13 +127,15 @@ def plot_poly_pitch(
 
     # We need to set the plot limits, they will not autoscale
     ax.set_xlim(times.min(), times.max())
-    ax.set_ylim(pitch_hat_no_zeros.min() - offset, pitch_hat_no_zeros.max() + offset)
+    ax.set_ylim(ymin=pitch_hat_no_zeros.min() - offset, ymax=pitch_hat_no_zeros.max() + offset)
 
     # Manually adding artists doesn't rescale the plot, so we need to autoscale
     ax.autoscale()
 
     ax.legend(proxies, string_labels, bbox_to_anchor=(1.01, 1),
                          loc='upper left', borderaxespad=0.)
+    # fig.colorbar(img, ax=ax, format="%+2.f dB", orientation="horizontal")
+
     plt.show()
 
 
@@ -112,9 +161,11 @@ def plot_mono_pitch(
             Should be of shape [T]
     """
     assert len(pitch_hat.shape) == 1
-    assert len(pitch_gt.shape) == 1
 
     pitch_hat = np.expand_dims(pitch_hat, axis=0)
-    pitch_gt = np.expand_dims(pitch_gt, axis=0)
+
+    if pitch_gt is not None:
+        assert len(pitch_gt.shape) == 1
+        pitch_gt = np.expand_dims(pitch_gt, axis=0)
 
     plot_poly_pitch(freq, pitch_hat, times, pitch_gt)
