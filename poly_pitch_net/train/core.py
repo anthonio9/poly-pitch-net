@@ -145,7 +145,11 @@ def train(
                           global_step=step)
         write_metrics(writer, step, metric_dict)
 
-        eloss_log.set_description(f"Evaluation loss: {eval_loss}")
+        eloss_log.set_description(
+                f'Evaluation loss: {eval_loss} '
+                f'acc: {metric_dict["accuracy"]} '
+                f'rmse: {metric_dict["rmse"]} '
+                f'rpa: {metric_dict["rpa"]}')
 
         epoch += 1
 
