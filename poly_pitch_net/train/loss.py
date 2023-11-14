@@ -67,7 +67,7 @@ def onehot_with_silence(labels, num_class, silence_label=torch.tensor(0)):
     labels_with_silence = num_class + 1
 
     # set the mask for the silence labels
-    mask = labels == silence_lable
+    mask = labels == silence_label
     modified_labels = labels.clone()
 
     # set silence labels to max value
@@ -76,14 +76,12 @@ def onehot_with_silence(labels, num_class, silence_label=torch.tensor(0)):
     # one-hot encode the modified labels
     one_hot_labels = torch.nn.functional.one_hot(modified_labels, num_classes=labels_with_silence)
 
-    # remove the last row in the one-hot encoding
-    one_hot_labels = one_hot_labels[:, :, :-1]
     return one_hot_labels
 
 
 def mono_pitch_loss(logits, pitch, register_silence=False):
     # transform logits of shape [B, O, T] into [B, T, O]
-    logits = logits.permute(0, 2, 1).reshape(-1, ppn.PITCH_BINS)
+    logits = logits.permute(0, 2, 1).reshape(-1, ppn.PITCH_BINS + int(register_silence))
 
     # start with a simple pitch_bins vector, make it one-hot
     pitch_bins = ppn.tools.frequency_to_bins(
@@ -96,7 +94,7 @@ def mono_pitch_loss(logits, pitch, register_silence=False):
         pitch_bins_1hot = onehot_with_ignore_label(pitch_bins, ppn.PITCH_BINS, torch.tensor(0))
 
     pitch_bins_1hot = pitch_bins_1hot.float()
-    pitch_bins_1hot = pitch_bins_1hot.reshape(-1, ppn.PITCH_BINS)
+    pitch_bins_1hot = pitch_bins_1hot.reshape(-1, ppn.PITCH_BINS + int(register_silence))
     
     # Compute binary cross-entropy loss
     return torch.nn.functional.binary_cross_entropy_with_logits(

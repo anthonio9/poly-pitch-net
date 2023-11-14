@@ -91,7 +91,6 @@ class Precision(torchutil.metrics.Precision):
 class RMSE(torchutil.metrics.RMSE):
     """Root mean square error of pitch distance in cents"""
     def update(self, predicted, target):
-        breakpoint()
         super().update(
             ppn.OCTAVE * torch.log2(predicted),
             ppn.OCTAVE * torch.log2(target))
