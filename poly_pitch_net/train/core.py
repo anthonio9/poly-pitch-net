@@ -148,8 +148,8 @@ def train(
         eloss_log.set_description(
                 f'Evaluation loss: {eval_loss} '
                 f'acc: {metric_dict["accuracy"]} '
-                f'rmse: {metric_dict["rmse"]} '
-                f'rpa: {metric_dict["rpa"]}')
+                f'rmse: {metric_dict["RMSE"]} '
+                f'rpa: {metric_dict["RPA"]}')
 
         epoch += 1
 
@@ -202,7 +202,6 @@ def evaluate(
             output = model.post_proc(output)
 
             # get metrics
-            breakpoint()
             metrics.update(output[ppn.KEY_PITCH_ARRAY_CENTS],
                            ppn.tools.frequency_to_cents(pitch_array, 
                                                         register_silence=True))
