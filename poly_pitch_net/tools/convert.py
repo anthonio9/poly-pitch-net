@@ -2,7 +2,6 @@ import poly_pitch_net as ppn
 import torch
 
 
-NO_PITCH_BIN = -1000000
 
 
 def bins_to_cents(bins, register_silence=False):
@@ -11,7 +10,7 @@ def bins_to_cents(bins, register_silence=False):
     cents = ppn.CENTS_PER_BIN * bins
 
     if register_silence:
-        cents[bins == ppn.PITCH_BINS] = NO_PITCH_BIN
+        cents[bins == ppn.PITCH_BINS] = ppn.NO_PITCH_BIN
 
     return cents
 
@@ -21,7 +20,7 @@ def frequency_to_cents(frequency, register_silence=False):
     cents = ppn.OCTAVE * torch.log2(frequency / ppn.FMIN)
 
     if register_silence:
-        cents[frequency == 0] = NO_PITCH_BIN
+        cents[frequency == 0] = ppn.NO_PITCH_BIN
 
     return cents
 
