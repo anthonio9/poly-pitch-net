@@ -88,6 +88,9 @@ KEY_MULTIPITCH = 'multi_pitch'
 KEY_PITCH_ARRAY = 'pitch_array'
 KEY_FEATURES = 'features'
 
+# for convert.py
+NO_PITCH_BIN = -1000000
+
 ###############################################################################
 # Training parameters
 ###############################################################################

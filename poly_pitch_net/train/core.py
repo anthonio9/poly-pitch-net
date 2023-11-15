@@ -109,7 +109,10 @@ def train(
                 output = model(features.to(model.device))
 
                 # Compute losses
-                loss = ppn.train.loss(model, output[ppn.KEY_PITCH_LOGITS], pitch_array.to(model.device))
+                loss = ppn.train.loss(
+                        model, 
+                        output[ppn.KEY_PITCH_LOGITS],
+                        pitch_array.to(model.device))
                 train_losses.append(loss.item())
 
             # Zero the accumulated gradients
