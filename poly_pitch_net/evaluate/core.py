@@ -10,7 +10,8 @@ import torchutil
 
 def run_evaluation(
         model_path: Path,
-        gpu: int = None):
+        gpu: int = None,
+        register_silence: bool = False):
 
     # load the model if path exist
     if not Path.exists(model_path):
@@ -20,7 +21,8 @@ def run_evaluation(
     if 'monopitchnet1d' in model_path.stem:
         model = MonoPitchNet1D(
                 dim_in=ppn.HCQT_DIM_IN,
-                no_pitch_bins=ppn.PITCH_BINS
+                no_pitch_bins=ppn.PITCH_BINS,
+                register_silence=register_silence
                 )
     else:
         model = FretNetCrepe(

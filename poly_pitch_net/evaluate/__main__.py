@@ -16,6 +16,11 @@ def parse_args():
         '--gpu',
         type=int,
         help='The index of the GPU to use for evaluation')
+    parser.add_argument(
+        '-s', 
+        '--register_silence',
+        action="store_true",
+        help="Enable silence registration")
 
     return parser.parse_known_args()[0]
 
