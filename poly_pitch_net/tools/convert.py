@@ -25,10 +25,14 @@ def frequency_to_cents(frequency, register_silence=False):
     return cents
 
 
-def cents_to_frequency(cents):
+def cents_to_frequency(cents, register_silence=False):
     """Converts cents to frequency in Hz"""
-    return ppn.FMIN * 2 ** (cents / ppn.OCTAVE)
+    frequency = ppn.FMIN * 2 ** (cents / ppn.OCTAVE)
 
+    if (register_silence):
+        frequency[cents == ppn.NO_PITCH_BIN] = 0
+
+    return frequency
 
 def cents_to_bins(cents, quantize_fn=torch.floor):
     """Converts cents to pitch bins"""

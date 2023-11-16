@@ -206,8 +206,9 @@ def evaluate(
 
             # get metrics
             metrics.update(output[ppn.KEY_PITCH_ARRAY_CENTS],
-                           ppn.tools.frequency_to_cents(pitch_array, 
-                                                        register_silence=True))
+                           ppn.tools.frequency_to_cents(
+                               pitch_array, 
+                               register_silence=model.register_silence))
 
             # Compute losses
             loss = ppn.train.loss(model, output[ppn.KEY_PITCH_LOGITS], pitch_array)

@@ -84,8 +84,12 @@ class MonoPitchNet1D(nn.Module):
         pitch_bins = logits.argmax(dim=-1)
         assert pitch_bins.shape == logits.shape[:-1]
 
-        pitch_cents = ppn.tools.convert.bins_to_cents(pitch_bins)
-        pitch_hz = ppn.tools.convert.bins_to_frequency(pitch_bins, register_silence=True)
+        pitch_cents = ppn.tools.convert.bins_to_cents(
+                pitch_bins,
+                register_silence=self.register_silence)
+        pitch_hz = ppn.tools.convert.bins_to_frequency(
+                pitch_bins,
+                register_silence=self.register_silence)
         input[ppn.KEY_PITCH_ARRAY_CENTS] = pitch_cents
         input[ppn.KEY_PITCH_ARRAY_HZ] = pitch_hz
 
