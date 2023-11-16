@@ -58,7 +58,8 @@ def plot_poly_pitch(
         freq, 
         pitch_hat, 
         times, 
-        pitch_gt=None):
+        pitch_gt=None,
+        freq_type='STFT'):
     """
     Plot the pitch on the frequency graph with matplotlib.
 
@@ -86,8 +87,15 @@ def plot_poly_pitch(
     # plot spectrogram
     hop_length = ppn.GSET_HOP_LEN 
     dB = freq
-    img = librosa.display.specshow(dB, y_axis='linear', x_axis='time',
-                                   sr=ppn.GSET_SAMPLE_RATE, ax=ax, x_coords=times)
+
+    if freq_type == 'STFT':
+        dB = librosa.amplitude_to_db(np.abs(dB), ref=np.max)
+        img = librosa.display.specshow(dB, y_axis='linear', x_axis='time',
+                                       sr=ppn.GSET_SAMPLE_RATE, ax=ax, x_coords=times)
+    if freq_type == 'HCQT':
+        img = librosa.display.specshow(dB, y_axis='cqt_hz', x_axis='time',
+                                       ax=ax, x_coords=times, bins_per_octave=36,
+                                       fmin=freq_vec[0], fmax=freq_vec[-1])
 
     # get the min and max of the pitch values
     pitch_hat_no_zeros = pitch_hat.flatten()
@@ -127,15 +135,16 @@ def plot_poly_pitch(
         print(f"max gt pitch {pitch_gt_no_zeros.max()} Hz")
 
     offset = max(maxs) - min(mins) 
-    offset *= 0.2
+    offset *= 0.7
 
 
     # We need to set the plot limits, they will not autoscale
     ax.set_xlim(times.min(), times.max())
-    ax.set_ylim(ymin=min(mins) - offset, ymax=max(maxs) + offset)
+    # ax.set_ylim(ymin=min(mins) - offset, ymax=max(maxs) + offset)
+    # ax.set_ylim(ymax=max(maxs) + offset)
 
     # Manually adding artists doesn't rescale the plot, so we need to autoscale
-    ax.autoscale()
+    # ax.autoscale()
 
     ax.legend(proxies, string_labels, bbox_to_anchor=(1.01, 1),
                          loc='upper left', borderaxespad=0.)
@@ -148,7 +157,8 @@ def plot_mono_pitch(
     freq, 
     pitch_hat, 
     times, 
-    pitch_gt=None):
+    pitch_gt=None,
+    freq_type='STFT'):
     """Plot mono pitch with ground truth
 
     Args:
@@ -169,10 +179,10 @@ def plot_mono_pitch(
 
     pitch_hat = np.expand_dims(pitch_hat, axis=0)
 
-    if pitch_gt.shape is not None:
+    if pitch_gt is not None:
         if len(pitch_gt.shape) == 1:
             pitch_gt = np.expand_dims(pitch_gt, axis=0)
 
         assert len(pitch_gt.shape) == 2
 
-    plot_poly_pitch(freq, pitch_hat, times, pitch_gt)
+    plot_poly_pitch(freq, pitch_hat, times, pitch_gt, freq_type)
