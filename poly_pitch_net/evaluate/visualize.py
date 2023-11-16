@@ -81,8 +81,6 @@ def plot_poly_pitch(
     assert len(pitch_hat.shape) == 2
     assert len(times.shape) == 1
 
-    breakpoint()
-
     fig, ax = plt.subplots()
 
     # plot spectrogram
@@ -101,6 +99,9 @@ def plot_poly_pitch(
     except ValueError:
         mins = [0]
         maxs = [ppn.GSET_SAMPLE_RATE // 2]
+
+    print(f"min pitch {min(mins)} Hz")
+    print(f"max pitch {max(maxs)} Hz")
 
     lines, proxies, string_labels = pitch_to_lines(pitch_hat, times, linestyle='dashed')
     ax.add_collection(lines)
@@ -122,12 +123,16 @@ def plot_poly_pitch(
         mins.append(pitch_gt_no_zeros.min())
         maxs.append(pitch_gt_no_zeros.max())
 
+        print(f"min gt pitch {pitch_gt_no_zeros.min()} Hz")
+        print(f"max gt pitch {pitch_gt_no_zeros.max()} Hz")
+
     offset = max(maxs) - min(mins) 
     offset *= 0.2
 
+
     # We need to set the plot limits, they will not autoscale
     ax.set_xlim(times.min(), times.max())
-    ax.set_ylim(ymin=pitch_hat_no_zeros.min() - offset, ymax=pitch_hat_no_zeros.max() + offset)
+    ax.set_ylim(ymin=min(mins) - offset, ymax=max(maxs) + offset)
 
     # Manually adding artists doesn't rescale the plot, so we need to autoscale
     ax.autoscale()
@@ -164,8 +169,10 @@ def plot_mono_pitch(
 
     pitch_hat = np.expand_dims(pitch_hat, axis=0)
 
-    if pitch_gt is not None:
-        assert len(pitch_gt.shape) == 1
-        pitch_gt = np.expand_dims(pitch_gt, axis=0)
+    if pitch_gt.shape is not None:
+        if len(pitch_gt.shape) == 1:
+            pitch_gt = np.expand_dims(pitch_gt, axis=0)
+
+        assert len(pitch_gt.shape) == 2
 
     plot_poly_pitch(freq, pitch_hat, times, pitch_gt)

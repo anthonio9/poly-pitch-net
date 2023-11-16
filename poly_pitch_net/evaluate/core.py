@@ -43,47 +43,44 @@ def run_evaluation(
 
     loader = ppn.datasets.loader('val')
 
-    iloader = iter(loader)
-    batch = next(iloader)
+    for batch in loader:
+        with torch.no_grad():
+            model.change_device(gpu)
+            features = batch[ppn.KEY_FEATURES].to(model.device)
 
-    with torch.no_grad():
-        model.change_device(gpu)
-        features = batch[ppn.KEY_FEATURES].to(model.device)
+            if 'MonoPitchNet1D' in model.model_name():
+                # choose HCQT channel 0
+                features = features[:, 0, :, :]
+
+            output = model(features)
+            output[ppn.KEY_PITCH_LOGITS] = torch.nn.functional.sigmoid(output[ppn.KEY_PITCH_LOGITS])
+            output = model.post_proc(output)
+            loss = ppn.train.evaluate(loader, model)
+
+            print(f"evaluation BCE loss: {loss}")
+
+        pitch_gt = batch[ppn.KEY_PITCH_ARRAY].cpu().numpy()[0, :, :]
+        times = batch[ppn.KEY_TIMES].cpu().numpy()[0, :]
+        audio = batch[ppn.KEY_AUDIO].cpu().numpy()[0, :]
+        features = librosa.stft(audio, n_fft=1024, hop_length=ppn.GSET_HOP_LEN)
+        features = librosa.amplitude_to_db(np.abs(features), ref=np.max)
 
         if 'MonoPitchNet1D' in model.model_name():
-            # choose HCQT channel 0
-            features = features[:, 0, :, :]
+            # choose string 3
+            pitch = output[ppn.KEY_PITCH_ARRAY_CENTS].cpu().numpy()[3, :]
+            pitch = ppn.tools.convert.cents_to_frequency(pitch, model.register_silence)
 
-        output = model(features)
-        output[ppn.KEY_PITCH_LOGITS] = torch.nn.functional.sigmoid(output[ppn.KEY_PITCH_LOGITS])
-        output = model.post_proc(output)
-        loss = ppn.train.evaluate(loader, model)
+            ppn.evaluate.plot_mono_pitch(freq=features,
+                                         pitch_hat=pitch,
+                                         pitch_gt=pitch_gt,
+                                         times=times)
+        else:
+            pitch = output[ppn.KEY_PITCH_WG_AVG].cpu().numpy()[0, :, :]
+            pitch = ppn.tools.convert.cents_to_frequency(pitch)
 
-        print(f"evaluation BCE loss: {loss}")
-
-    pitch_gt = batch[ppn.KEY_PITCH_ARRAY].cpu().numpy()[0, :, :]
-    times = batch[ppn.KEY_TIMES].cpu().numpy()[0, :]
-    audio = batch[ppn.KEY_AUDIO].cpu().numpy()[0, :]
-    features = librosa.stft(audio, n_fft=1024, hop_length=ppn.GSET_HOP_LEN)
-    features = librosa.amplitude_to_db(np.abs(features), ref=np.max)
-
-    if 'MonoPitchNet1D' in model.model_name():
-        # choose string 3
-        pitch = output[ppn.KEY_PITCH_ARRAY_CENTS].cpu().numpy()[3, :]
-        pitch = ppn.tools.convert.cents_to_frequency(pitch, model.register_silence)
-        pitch_gt = pitch_gt[3, :]
-
-        ppn.evaluate.plot_mono_pitch(freq=features,
-                                     pitch_hat=pitch,
-                                     pitch_gt=pitch_gt,
-                                     times=times)
-    else:
-        pitch = output[ppn.KEY_PITCH_WG_AVG].cpu().numpy()[0, :, :]
-        pitch = ppn.tools.convert.cents_to_frequency(pitch)
-
-        ppn.evaluate.plot_poly_pitch(freq=features,
-                                     pitch_hat=pitch,
-                                     pitch_gt=pitch_gt,
-                                     times=times)
-    
+            ppn.evaluate.plot_poly_pitch(freq=features,
+                                         pitch_hat=pitch,
+                                         pitch_gt=pitch_gt,
+                                         times=times)
+        
 
