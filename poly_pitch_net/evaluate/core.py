@@ -4,6 +4,8 @@ from poly_pitch_net.models import FretNetCrepe
 from poly_pitch_net.models import MonoPitchNet1D
 
 from pathlib import Path
+import librosa
+import numpy as np
 import torch
 import torchutil
 
@@ -59,14 +61,16 @@ def run_evaluation(
 
         print(f"evaluation BCE loss: {loss}")
 
-    features = batch[ppn.KEY_FEATURES].cpu().numpy()[0, 0, :, :]
     pitch_gt = batch[ppn.KEY_PITCH_ARRAY].cpu().numpy()[0, :, :]
     times = batch[ppn.KEY_TIMES].cpu().numpy()[0, :]
+    audio = batch[ppn.KEY_AUDIO].cpu().numpy()[0, :]
+    features = librosa.stft(audio, n_fft=1024, hop_length=ppn.GSET_HOP_LEN)
+    features = librosa.amplitude_to_db(np.abs(features), ref=np.max)
 
     if 'MonoPitchNet1D' in model.model_name():
         # choose string 3
         pitch = output[ppn.KEY_PITCH_ARRAY_CENTS].cpu().numpy()[3, :]
-        pitch = ppn.tools.convert.cents_to_frequency(pitch)
+        pitch = ppn.tools.convert.cents_to_frequency(pitch, model.register_silence)
         pitch_gt = pitch_gt[3, :]
 
         ppn.evaluate.plot_mono_pitch(freq=features,
