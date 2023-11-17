@@ -29,4 +29,4 @@ def parse_args():
     return parser.parse_known_args()[0]
 
 
-ppn.train.run(**vars(parse_args()))
+ppn.train.prepare_and_run(**vars(parse_args()))

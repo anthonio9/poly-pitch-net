@@ -84,7 +84,7 @@ def run(model_type: str,
     model.change_device(device=gpu)
 
     print("Starting the training")
-    train(train_loader, val_loader, model, model_dir)
+    train(train_loader, val_loader, model, model_dir, log_wandb=log_wandb)
 
 def train(
         train_loader,
