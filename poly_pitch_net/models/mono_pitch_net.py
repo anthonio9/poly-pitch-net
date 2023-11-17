@@ -34,10 +34,13 @@ class MonoPitchNet1D(nn.Module):
 
         self.conv1 = MonoPitchBlock1D(self.dim_in, 256)
         self.conv2 = MonoPitchBlock1D(256, 32)
-        self.conv3 = MonoPitchBlock1D(32, 128)
+        self.conv3 = MonoPitchBlock1D(32, 32)
+        self.conv4 = MonoPitchBlock1D(32, 128)
+        self.conv5 = MonoPitchBlock1D(128, 256)
+        self.conv6 = MonoPitchBlock1D(256, 512)
 
         self.pitch_head = nn.Conv1d(
-                128,
+                512,
                 no_pitch_bins + int(register_silence), 1)
 
     def forward(self, input):
@@ -142,8 +145,8 @@ class MonoPitchBlock1D(nn.Sequential):
             self,
             in_channels: int,
             out_channels: int,
-            kernel_size: int=3,
-            padding: int=1,
+            kernel_size: int=5,
+            padding: int=2,
             dilation: int=1,
             ):
         layers = (
