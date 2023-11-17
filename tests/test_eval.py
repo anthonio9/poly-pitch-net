@@ -72,3 +72,18 @@ def test_plot_mono_pitch_hcqt():
                                  pitch_gt=pitch_gt,
                                  times=times,
                                  freq_type='HCQT')
+
+def test_plot_poly_pitch_no_features():
+    loader = ppn.datasets.loader('pytest', data_proc_type=None)
+
+    loader = iter(loader)
+    batch = next(loader)
+
+    # choose string number 3
+    pitch_gt = batch[ppn.KEY_PITCH_ARRAY].numpy()[0, :, :]
+    times = batch[ppn.KEY_TIMES].numpy()[0, :]
+
+    ppn.evaluate.plot_poly_pitch(freq=None,
+                                 pitch_hat=pitch_gt,
+                                 times=times, 
+                                 freq_type='STFT')

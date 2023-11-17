@@ -78,7 +78,9 @@ def plot_poly_pitch(
         C - number of the guitar strings
         T - number of the time stamps
     """
-    assert len(freq.shape) == 2
+    if freq is not None:
+        assert len(freq.shape) == 2
+
     assert len(pitch_hat.shape) == 2
     assert len(times.shape) == 1
 
@@ -88,11 +90,11 @@ def plot_poly_pitch(
     hop_length = ppn.GSET_HOP_LEN 
     dB = freq
 
-    if freq_type == 'STFT':
+    if freq is not None and freq_type == 'STFT':
         dB = librosa.amplitude_to_db(np.abs(dB), ref=np.max)
         img = librosa.display.specshow(dB, y_axis='linear', x_axis='time',
                                        sr=ppn.GSET_SAMPLE_RATE, ax=ax, x_coords=times)
-    if freq_type == 'HCQT':
+    if freq is not None and freq_type == 'HCQT':
         img = librosa.display.specshow(dB, y_axis='cqt_hz', x_axis='time',
                                        ax=ax, x_coords=times, bins_per_octave=36,
                                        fmin=freq_vec[0], fmax=freq_vec[-1])
@@ -137,11 +139,10 @@ def plot_poly_pitch(
     offset = max(maxs) - min(mins) 
     offset *= 0.7
 
-
     # We need to set the plot limits, they will not autoscale
     ax.set_xlim(times.min(), times.max())
     # ax.set_ylim(ymin=min(mins) - offset, ymax=max(maxs) + offset)
-    # ax.set_ylim(ymax=max(maxs) + offset)
+    ax.set_ylim(ymax=max(maxs) + offset)
 
     # Manually adding artists doesn't rescale the plot, so we need to autoscale
     # ax.autoscale()

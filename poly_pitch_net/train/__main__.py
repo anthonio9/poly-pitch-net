@@ -20,6 +20,11 @@ def parse_args():
         '--register_silence',
         action="store_true",
         help="Enable silence registration")
+    parser.add_argument(
+        '-w', 
+        '--use_wandb',
+        action="store_true",
+        help="Enable weights & biases logging")
 
     return parser.parse_known_args()[0]
 

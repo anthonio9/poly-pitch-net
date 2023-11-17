@@ -11,11 +11,39 @@ from tqdm import tqdm
 import random
 import librosa
 import torchutil
+import wandb
+
+
+def prepare_and_run(model_type: str,
+        gpu: int = None, 
+        register_silence: bool = False,
+        use_wandb: bool = False):
+
+    log_wandb = None
+    
+    if use_wandb:
+        wandb.login()
+
+        log_wandb = wandb.init(
+            # Set the project where this run will be logged
+            project="MonoPitchNet1D",
+
+            # Track hyperparameters and run metadata
+            config={
+                "learning_rate": ppn.LEARNING_RATE,
+                "epochs": ppn.STEPS * 2,
+            })
+
+    run(model_type,
+        gpu,
+        register_silence,
+        log_wandb)
 
 
 def run(model_type: str,
         gpu: int = None, 
-        register_silence: bool = False):
+        register_silence: bool = False,
+        log_wandb=None):
 
     if 'mono1d' in model_type:
         EX_NAME = '_'.join([MonoPitchNet1D.model_name(),
@@ -62,7 +90,8 @@ def train(
         train_loader,
         val_loader,
         model,
-        log_dir):
+        log_dir,
+        log_wandb=None):
 
     # Initialize a writer to log any reported results
     writer = SummaryWriter(log_dir)
@@ -147,6 +176,11 @@ def train(
                           scalar_value=eval_loss,
                           global_step=step)
         write_metrics(writer, step, metric_dict)
+
+        if log_wandb is not None:
+            metric_dict["train_loss"] = train_losses
+            metric_dict["eval_loss"] = eval_loss
+            log_wandb.log(metric_dict)
 
         eloss_log.set_description(
                 f'Evaluation loss: {eval_loss} '
