@@ -32,6 +32,7 @@ def prepare_and_run(model_type: str,
             config={
                 "learning_rate": ppn.LEARNING_RATE,
                 "epochs": ppn.STEPS * 2,
+                "register_silence" : register_silence,
             })
 
     run(model_type,

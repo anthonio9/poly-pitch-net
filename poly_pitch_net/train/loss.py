@@ -3,26 +3,17 @@ import torch
 import poly_pitch_net as ppn
 
 
-def poly_pitch_loss(logits, pitch):
-    # reshape [B, C, O, T] ==> [B, C, T, O]
-    logits = logits.reshape(shape=(
-        logits.shape[0],
-        logits.shape[1],
-        logits.shape[-1],
-        logits.shape[2]
-        ))
+def poly_pitch_loss(logits, pitch, register_silence=False):
+    # number of all bins, in / ex cluding silence
+    no_all_bins = ppn.PITCH_BINS + int(register_silence)
 
-    if pitch_names is None:
-        no_pitch_bins = ppn.PITCH_BINS
-    else:
-        # keep compatibility with the tests
-        no_pitch_bins = pitch_names.shape[-1]
-        
-    logits = logits.reshape(-1, no_pitch_bins).float()
+    # transform logits of shape [B, O, T] into [B, T, O]
+    logits = logits.permute(0, 2, 1).reshape(-1, no_all_bins)
+
     pitch = pitch.flatten()
 
     loss.cents = ppn.tools.convert.bins_to_cents(
-            torch.arange(no_pitch_bins))[:, None]
+            torch.arange(no_all_bins))[:, None]
 
     # Ensure values are on correct device (no-op if devices are the same)
     loss.cents = loss.cents.to(pitch.device)
@@ -120,8 +111,10 @@ def loss(model, logits, pitch, pitch_names=None):
     """
     # breakpoint()
 
-    if 'FretNetCrepe' in model.model_name():
-        return poly_pitch_loss(logits, pitch, model.register_silence)
-    
-    if 'MonoPitchNet1D' in model.model_name():
-        return mono_pitch_loss(logits, pitch, model.register_silence)
+    return poly_pitch_loss(logits, pitch, model.register_silence)
+
+    #if 'FretNetCrepe' in model.model_name():
+    #    return poly_pitch_loss(logits, pitch, model.register_silence)
+    #
+    #if 'MonoPitchNet1D' in model.model_name():
+    #    return mono_pitch_loss(logits, pitch, model.register_silence)

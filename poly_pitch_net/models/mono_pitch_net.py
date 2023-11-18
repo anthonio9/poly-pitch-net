@@ -63,6 +63,9 @@ class MonoPitchNet1D(nn.Module):
         embeddings = self.conv1(input)
         embeddings = self.conv2(embeddings)
         embeddings = self.conv3(embeddings)
+        embeddings = self.conv4(embeddings)
+        embeddings = self.conv5(embeddings)
+        embeddings = self.conv6(embeddings)
         embeddings = self.pitch_head(embeddings)
 
         # Initialize an empty dictionary to hold output
@@ -82,10 +85,20 @@ class MonoPitchNet1D(nn.Module):
         logits = input[ppn.KEY_PITCH_LOGITS]
         # reshape [B, O, T] into [B, T, O]
         logits = logits.permute(0, 2, 1)
+        logits = torch.nn.functional.softmax(logits, dim=-1)
+
+        assert torch.all(logits.isfinite())
 
         # this should be of shape [B, T]
         pitch_bins = logits.argmax(dim=-1)
         assert pitch_bins.shape == logits.shape[:-1]
+
+        # count how many argmaxs are equal to 0
+        # zero_max_bins = (pitch_bins == 0).count_nonzero()
+        # print(f"Zero max bins: {zero_max_bins}")
+
+        # if self.register_silence:
+        #    pitch_bins[logits[:, :, 360] > 0.5] = ppn.PITCH_BINS
 
         pitch_cents = ppn.tools.convert.bins_to_cents(
                 pitch_bins,
