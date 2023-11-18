@@ -131,6 +131,96 @@ class MonoPitchNet1D(PitchNet):
         return input
 
 
+class MonoPitchNetTime(PitchNet):
+    """Mono Pitch recognition model based of penn FCNF0"""
+
+    def __init__(self, dim_in: int, no_pitch_bins: int=360,
+                 register_silence: bool=False, string=3):
+        """Initialize all components of MonoPitchNet model.
+
+        Args:
+            dim_in (int): number of frequency bins per block of the provided input data,
+            this is also the number of channels in the first Conv1d layer.
+            no_pitch_bins (int): number of the output pitch bins logits, defaults to 360.
+            register_silence (bool): register_silence (True) with the model or not (False)
+        """
+
+        nn.Module.__init__(self)
+
+        self.dim_in = dim_in
+        self.no_pitch_bins = no_pitch_bins
+        self.register_silence = register_silence
+        self.string = string
+
+        layers = (penn.model.Normalize(),) if penn.NORMALIZE_INPUT else ()
+
+        layers += (
+            MonoPitchBlockTime(1, 256, 223, kernel_size=64),
+            MonoPitchBlockTime(256, 32, 112, kernel_size=32),
+            MonoPitchBlockTime(32, 32, 97, kernel_size=32),
+            MonoPitchBlockTime(32, 128, 66),
+            MonoPitchBlockTime(128, 256, 35),
+            MonoPitchBlockTime(256, 512, 4),
+            torch.nn.Conv1d(512, penn.PITCH_BINS + int(self.register_silence), 4)
+                )
+
+        self.sequence = torch.nn.Sequential(layers)
+
+
+    def pre_proc(self, input):
+        # choose the string
+        assert len(input[ppn.KEY_PITCH_ARRAY].shape) == 3
+        input[ppn.KEY_PITCH_ARRAY] = input[ppn.KEY_PITCH_ARRAY][:, self.string, :]
+
+        return input
+
+    def forward(self, input: dict):
+        input = self.post_proc(input)
+
+        features = input[ppn.KEY_AUDIO].to(self.device)
+
+        output = {}
+        output[ppn.KEY_PITCH_LOGITS] = self.sequence(features)
+
+        return output
+
+    def post_proc(self, input: dict):
+        """Process logits into cents using argmax
+
+        Args:
+            input (dict)
+                output returned from the forward function
+        """
+        logits = input[ppn.KEY_PITCH_LOGITS]
+        # reshape [B, O, T] into [B, T, O]
+        logits = logits.permute(0, 2, 1)
+        logits = torch.nn.functional.softmax(logits, dim=-1)
+
+        assert torch.all(logits.isfinite())
+
+        # this should be of shape [B, T]
+        pitch_bins = logits.argmax(dim=-1)
+        assert pitch_bins.shape == logits.shape[:-1]
+
+        # count how many argmaxs are equal to 0
+        # zero_max_bins = (pitch_bins == 0).count_nonzero()
+        # print(f"Zero max bins: {zero_max_bins}")
+
+        # if self.register_silence:
+        #    pitch_bins[logits[:, :, 360] > 0.5] = ppn.PITCH_BINS
+
+        pitch_cents = ppn.tools.convert.bins_to_cents(
+                pitch_bins,
+                register_silence=self.register_silence)
+        pitch_hz = ppn.tools.convert.bins_to_frequency(
+                pitch_bins,
+                register_silence=self.register_silence)
+        input[ppn.KEY_PITCH_ARRAY_CENTS] = pitch_cents
+        input[ppn.KEY_PITCH_ARRAY_HZ] = pitch_hz
+
+        return input
+
+
 class MonoPitchBlock1D(nn.Sequential):
 
     def __init__(
@@ -150,5 +240,40 @@ class MonoPitchBlock1D(nn.Sequential):
                 nn.BatchNorm1d(out_channels),
                 nn.ReLU()
                 )
+
+        super().__init__(*layers)
+
+
+class MonoPitchBlockTime(torch.nn.Sequential):
+
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        length=1,
+        pooling=None,
+        kernel_size=32):
+        layers = (
+            torch.nn.Conv1d(in_channels, out_channels, kernel_size),
+            torch.nn.ReLU())
+
+        # Maybe add pooling
+        if pooling is not None:
+            layers += (torch.nn.MaxPool1d(*pooling),)
+
+        # Maybe add normalization
+        if ppn.NORMALIZATION == 'batch':
+            layers += (torch.nn.BatchNorm1d(out_channels, momentum=.01),)
+        elif ppn.NORMALIZATION == 'instance':
+            layers += (torch.nn.InstanceNorm1d(out_channels),)
+        elif ppn.NORMALIZATION == 'layer':
+            layers += (torch.nn.LayerNorm((out_channels, length)),)
+        else:
+            raise ValueError(
+                f'Normalization method {ppn.NORMALIZATION} is not defined')
+
+        # Maybe add dropout
+        if ppn.DROPOUT is not None:
+            layers += (torch.nn.Dropout(penn.DROPOUT),)
 
         super().__init__(*layers)

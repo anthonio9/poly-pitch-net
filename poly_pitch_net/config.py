@@ -45,6 +45,14 @@ NUM_FRAMES = 200
 
 NO_STRINGS = 6
 
+DROPOUT = None
+
+# Whether to peak-normalize CREPE input audio
+NORMALIZE_INPUT = True
+
+# Type of model normalization
+NORMALIZATION = 'batch'
+
 
 ###############################################################################
 # GuitarSet Dataset parameters
