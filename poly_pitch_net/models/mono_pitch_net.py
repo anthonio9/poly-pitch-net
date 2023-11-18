@@ -47,9 +47,11 @@ class MonoPitchNet1D(PitchNet):
 
     def pre_proc(self, input: dict):
         # choose HCQT channel 0
+        assert len(input[ppn.KEY_FEATURES].shape) == 4
         input[ppn.KEY_FEATURES] = input[ppn.KEY_FEATURES][:, 0, :, :]
 
         # choose string 3
+        assert len(input[ppn.KEY_PITCH_ARRAY].shape) == 3
         input[ppn.KEY_PITCH_ARRAY] = input[ppn.KEY_PITCH_ARRAY][:, self.string, :]
         
         return input
@@ -75,7 +77,7 @@ class MonoPitchNet1D(PitchNet):
         features = input[ppn.KEY_FEATURES]
 
         # always be sure about the right device
-        features.to(self.device)
+        features = features.to(self.device)
 
         embeddings = self.conv1(features)
         embeddings = self.conv2(embeddings)
@@ -127,8 +129,6 @@ class MonoPitchNet1D(PitchNet):
         input[ppn.KEY_PITCH_ARRAY_HZ] = pitch_hz
 
         return input
-
-    @classmethod
 
 
 class MonoPitchBlock1D(nn.Sequential):

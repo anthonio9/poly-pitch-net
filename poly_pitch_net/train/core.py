@@ -126,7 +126,10 @@ def train(
 
                 # Forward pass
                 output = model(batch)
-                pitch_array = model.pre_proc(batch)[ppn.KEY_PITCH_ARRAY]
+
+                # pitch array is already pre-processed
+                pitch_array = batch[ppn.KEY_PITCH_ARRAY]
+                pitch_array = pitch_array.to(model.device)
 
                 # Compute losses
                 loss = ppn.train.loss(
@@ -219,7 +222,8 @@ def evaluate(
             # process into pitch cents
             output = model.post_proc(output)
 
-            pitch_array = model.pre_proc(batch)[ppn.KEY_PITCH_ARRAY]
+            # pitch array is already pre-processed
+            pitch_array = batch[ppn.KEY_PITCH_ARRAY]
             pitch_array = pitch_array.to(model.device)
 
             # get metrics

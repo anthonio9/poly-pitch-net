@@ -1,5 +1,6 @@
-import torch.nn as nn
 from abc import abstractmethod
+import torch
+import torch.nn as nn
 
 
 class PitchNet(nn.Module):
@@ -8,6 +9,7 @@ class PitchNet(nn.Module):
     def __init__(self):
         nn.Module.__init__(self)
 
+    @classmethod
     def model_name(cls):
         """
         Retrieve an appropriate tag, the class name, for the model.
