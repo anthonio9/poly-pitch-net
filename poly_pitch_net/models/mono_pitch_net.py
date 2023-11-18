@@ -173,6 +173,22 @@ class MonoPitchNetTime(PitchNet):
         assert len(input[ppn.KEY_PITCH_ARRAY].shape) == 3
         input[ppn.KEY_PITCH_ARRAY] = input[ppn.KEY_PITCH_ARRAY][:, self.string, :]
 
+        chunks = input[ppn.KEY_PITCH_ARRAY].shape[-1]
+        features = input[ppn.KEY_AUDIO]
+        pad_right = chunks * ppn.GSET_HOP_LEN - features.shape[-1]
+
+        # padd up to a nice value of 200 * 256 frames
+        features = nn.functional.pad(features, (0, pad_right), 'constant', 0)
+        
+        features_chunked = features.chunk(chunks=chunks, dim=-1)
+        features = torch.stack(features_chunked, dim=-1)
+
+        assert len(features.shape) == 3
+
+        #features = features[:, None, :, :]
+
+        input[ppn.KEY_AUDIO] = features
+
         return input
 
     def forward(self, input: dict):
