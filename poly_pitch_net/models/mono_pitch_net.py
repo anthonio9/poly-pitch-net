@@ -1,9 +1,10 @@
 import poly_pitch_net as ppn
+from poly_pitch_net.models import PitchNet
 import torch.nn as nn
 import torch
 
 
-class MonoPitchNet1D(nn.Module):
+class MonoPitchNet1D(PitchNet):
     """A small model focused on guitar pitch recognition. 
 
     The purpose of the model is to recognize pitch from one string only, 
@@ -16,7 +17,7 @@ class MonoPitchNet1D(nn.Module):
     """
 
     def __init__(self, dim_in: int, no_pitch_bins: int=360,
-                 register_silence: bool=False):
+                 register_silence: bool=False, string=3):
         """Initialize all components of MonoPitchNet model.
 
         Args:
@@ -31,6 +32,7 @@ class MonoPitchNet1D(nn.Module):
         self.dim_in = dim_in
         self.no_pitch_bins = no_pitch_bins
         self.register_silence = register_silence
+        self.string = string
 
         self.conv1 = MonoPitchBlock1D(self.dim_in, 256)
         self.conv2 = MonoPitchBlock1D(256, 32)
@@ -42,6 +44,15 @@ class MonoPitchNet1D(nn.Module):
         self.pitch_head = nn.Conv1d(
                 512,
                 no_pitch_bins + int(register_silence), 1)
+
+    def pre_proc(self, input: dict):
+        # choose HCQT channel 0
+        input[ppn.KEY_FEATURES] = input[ppn.KEY_FEATURES][:, 0, :, :]
+
+        # choose string 3
+        input[ppn.KEY_PITCH_ARRAY] = input[ppn.KEY_PITCH_ARRAY][:, self.string, :]
+        
+        return input
 
     def forward(self, input):
         """Process data and input pitch logits.
@@ -60,7 +71,13 @@ class MonoPitchNet1D(nn.Module):
         C - number of the CQT / STFT bins, given in the init function
         O - number of pitch bins, given in the init function
         """
-        embeddings = self.conv1(input)
+        inpput = self.pre_proc(input)
+        features = input[ppn.KEY_FEATURES]
+
+        # always be sure about the right device
+        features.to(self.device)
+
+        embeddings = self.conv1(features)
         embeddings = self.conv2(embeddings)
         embeddings = self.conv3(embeddings)
         embeddings = self.conv4(embeddings)
@@ -112,44 +129,6 @@ class MonoPitchNet1D(nn.Module):
         return input
 
     @classmethod
-    def model_name(cls):
-        """
-        Retrieve an appropriate tag, the class name, for the model.
-
-        Returns
-        ----------
-        tag : str
-          Name of the child class calling the function
-        """
-
-        tag = cls.__name__
-
-        return tag
-
-    def change_device(self, device=None):
-        """
-        Change the device and load the model onto the new device.
-
-        Parameters
-        ----------
-        device : string, int or None, optional (default None)
-          Device to load model onto
-        """
-
-        if device is None:
-            # If the function is called without a device, use the current device
-            device = self.device
-
-        if isinstance(device, int):
-            # If device is an integer, assume device represents GPU number
-            device = torch.device(f'cuda:{device}'
-                                  if torch.cuda.is_available() else 'cpu')
-
-        # Change device field
-        self.device = device
-        # Load the transcription model onto the device
-        self.to(self.device)
-
 
 
 class MonoPitchBlock1D(nn.Sequential):

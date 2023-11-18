@@ -121,22 +121,12 @@ def train(
 
         # Loop through the dataset
         for batch in train_loader:
-            # Unpack batch
-            features = batch[ppn.KEY_FEATURES]
-            pitch_array = batch[ppn.KEY_PITCH_ARRAY]
-
-            if 'MonoPitchNet1D' in model.model_name():
-                # choose HCQT channel 0
-                features = features[:, 0, :, :]
-
-                # choose string 3
-                pitch_array = pitch_array[:, 3, :]
-
 
             with torch.autocast(model.device.type):
 
                 # Forward pass
-                output = model(features.to(model.device))
+                output = model(batch)
+                pitch_array = model.pre_proc(batch)[ppn.KEY_PITCH_ARRAY]
 
                 # Compute losses
                 loss = ppn.train.loss(
@@ -223,21 +213,14 @@ def evaluate(
         model.eval()
 
         for batch in loader:
-            features = batch[ppn.KEY_FEATURES].to(device=model.device)
-            pitch_array = batch[ppn.KEY_PITCH_ARRAY].to(device=model.device)
-
-            if 'MonoPitchNet1D' in model.model_name():
-                # choose HCQT channel 0
-                features = features[:, 0, :, :]
-
-                # choose string 3
-                pitch_array = pitch_array[:, 3, :]
-
             # set the pitch names to something
-            output = model(features)
+            output = model(batch)
 
             # process into pitch cents
             output = model.post_proc(output)
+
+            pitch_array = model.pre_proc(batch)[ppn.KEY_PITCH_ARRAY]
+            pitch_array = pitch_array.to(model.device)
 
             # get metrics
             metrics.update(output[ppn.KEY_PITCH_ARRAY_CENTS],
