@@ -1,5 +1,6 @@
 import poly_pitch_net as ppn
 from poly_pitch_net.models import PitchNet
+import penn
 import torch.nn as nn
 import torch
 
@@ -152,7 +153,7 @@ class MonoPitchNetTime(PitchNet):
         self.register_silence = register_silence
         self.string = string
 
-        layers = (penn.model.Normalize(),) if penn.NORMALIZE_INPUT else ()
+        layers = (penn.model.Normalize(),) if ppn.NORMALIZE_INPUT else ()
 
         layers += (
             MonoPitchBlockTime(1, 256, 223, kernel_size=64),
@@ -164,7 +165,7 @@ class MonoPitchNetTime(PitchNet):
             torch.nn.Conv1d(512, penn.PITCH_BINS + int(self.register_silence), 4)
                 )
 
-        self.sequence = torch.nn.Sequential(layers)
+        self.sequence = torch.nn.Sequential(*layers)
 
 
     def pre_proc(self, input):
@@ -175,7 +176,9 @@ class MonoPitchNetTime(PitchNet):
         return input
 
     def forward(self, input: dict):
-        input = self.post_proc(input)
+        input = self.pre_proc(input)
+
+        breakpoint()
 
         features = input[ppn.KEY_AUDIO].to(self.device)
 

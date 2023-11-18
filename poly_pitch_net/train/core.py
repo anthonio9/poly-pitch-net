@@ -69,7 +69,7 @@ def run(model_type: str,
                 no_pitch_bins=ppn.PITCH_BINS
                 )
 
-    elif 'monotype' in model_type
+    elif 'monotime' in model_type:
         EX_NAME = '_'.join([MonoPitchNetTime.model_name(),
                             GuitarSetPPN.dataset_name(),
                             HCQT.features_name()])
@@ -77,7 +77,7 @@ def run(model_type: str,
         model = MonoPitchNetTime(
                 dim_in=ppn.GSET_HOP_LEN,
                 no_pitch_bins=ppn.PITCH_BINS,
-                register_silence=register_silence
+                register_silence=register_silence,
                 string=3
                 )
 
