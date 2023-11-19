@@ -36,6 +36,9 @@ def prepare_and_run(model_type: str,
                 "register_silence" : register_silence,
             })
 
+    if not register_silence:
+        print("silence wont be registered")
+
     run(model_type,
         gpu,
         register_silence,
@@ -243,9 +246,11 @@ def evaluate(
             cents = output[ppn.KEY_PITCH_ARRAY_CENTS]
             cents = cents[pitch_array != 0]
             pitch_array_no_silence = pitch_array[pitch_array != 0]
+            
+            # print(f"cents zeros: {cents.numel() - cents.count_nonzero()}")
 
             # get metrics
-            metrics.update(output[ppn.KEY_PITCH_ARRAY_CENTS],
+            metrics.update(cents,
                            ppn.tools.frequency_to_cents(
                                pitch_array_no_silence, 
                                register_silence=model.register_silence))

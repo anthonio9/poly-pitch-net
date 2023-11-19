@@ -113,6 +113,9 @@ class MonoPitchNet1D(PitchNet):
         pitch_bins = logits.argmax(dim=-1)
         assert pitch_bins.shape == logits.shape[:-1]
 
+        # zero_max_bins = (pitch_bins == 0).sum()
+        # print(f"Zero max bins: {zero_max_bins}")
+
         pitch_cents = ppn.tools.convert.bins_to_cents(
                 pitch_bins,
                 register_silence=self.register_silence)
@@ -215,8 +218,8 @@ class MonoPitchNetTime(PitchNet):
         assert pitch_bins.shape == logits.shape[:-1]
 
         # count how many argmaxs are equal to 0
-        # zero_max_bins = (pitch_bins == 0).count_nonzero()
-        # print(f"Zero max bins: {zero_max_bins}")
+        zero_max_bins = (pitch_bins == 0).sum()
+        print(f"Zero max bins: {zero_max_bins}")
 
         # if self.register_silence:
         #    pitch_bins[logits[:, :, 360] > 0.5] = ppn.PITCH_BINS
