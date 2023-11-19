@@ -239,10 +239,15 @@ def evaluate(
             pitch_array = batch[ppn.KEY_PITCH_ARRAY]
             pitch_array = pitch_array.to(model.device)
 
+            # remove frames without pitch / with silence
+            cents = output[ppn.KEY_PITCH_ARRAY_CENTS]
+            cents = cents[pitch_array != 0]
+            pitch_array_no_silence = pitch_array[pitch_array != 0]
+
             # get metrics
             metrics.update(output[ppn.KEY_PITCH_ARRAY_CENTS],
                            ppn.tools.frequency_to_cents(
-                               pitch_array, 
+                               pitch_array_no_silence, 
                                register_silence=model.register_silence))
 
             # Compute losses

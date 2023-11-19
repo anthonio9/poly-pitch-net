@@ -5,3 +5,12 @@ SIGMOID - what an huge problem it was today!
 Binary crosss entropy loss is the loss used in the penn model, that I'm taking quite a lot of inspiration from, however it's not just a regular BCE, it's the BCE with LOGITS - `binary_cross_entropy_with_logits`. What is it exactly and how does it differ from binary cross entropy? Well, the difference is that BCE with logits applies the sigmoid function to the input just before Calculating the loss. The sigmoid funciton turns logits, which are the output values of the last layer in the nn model, into probabilities. 
 
 The problem in my case was that the funciton would always output 0.69 and therefore the model wasn't capable of traning itself, 0.69 in the world of BCE means that the output no better than random. Why? Having understood what exactly is the difference between the two I decided to take a look at my model's file and THERE IT WAS, the sigmoid funciton called right after the logits output. Hopefully now that it's gone, the model will train much better!
+
+== 19.11.2023
+
+Investigation of PENN training input shape. FCNF0 config input data has input shape of [32, 1, 1024], FCNF0++ input data of shape [128, 1, 1024]. 
+
+=== Pitch only
+
+All the metric evaluation will be done using pitch only frames in the ground truth. This is how penn does it and it seems to be the better way.
+The labels with no information about pitch (just silence) should have their frequency or the pitch bin randomized.

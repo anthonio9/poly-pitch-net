@@ -82,6 +82,11 @@ def mono_pitch_loss(logits, pitch, register_silence=False):
             pitch, 
             register_silence=register_silence)
 
+    # replace not finite (Nan or -inf, +inf) with a random value in [0, ppn.PITCH_BINS]
+    pitch_bins_inf = ~pitch_bins.isfinite()
+    no_silence = pitch_bins_inf.sum()
+    pitch_bins[pitch_bins_inf] = torch.randint(0, ppn.PITCH_BINS, size = (no_silence,))
+
     pitch_bins_1hot = torch.nn.functional.one_hot(
             pitch_bins, 
             num_classes=no_all_bins)
@@ -111,10 +116,10 @@ def loss(model, logits, pitch, pitch_names=None):
     """
     # breakpoint()
 
-    return poly_pitch_loss(logits, pitch, model.register_silence)
+    # return poly_pitch_loss(logits, pitch, model.register_silence)
 
     #if 'FretNetCrepe' in model.model_name():
     #    return poly_pitch_loss(logits, pitch, model.register_silence)
     #
-    #if 'MonoPitchNet1D' in model.model_name():
-    #    return mono_pitch_loss(logits, pitch, model.register_silence)
+    if 'MonoPitchNet1D' in model.model_name():
+       return mono_pitch_loss(logits, pitch, model.register_silence)
