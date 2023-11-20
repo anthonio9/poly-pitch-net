@@ -5,7 +5,7 @@ import poly_pitch_net as ppn
 
 
 # Width of a pitch bin
-CENTS_PER_BIN = 20.  # cents
+CENTS_PER_BIN = 5.  # cents
 
 # Whether to trade quantization error for noise during inference
 DITHER = False
@@ -32,7 +32,7 @@ NUM_FFT = 1024
 OCTAVE = 1200  # cents
 
 # Number of pitch bins to predict
-PITCH_BINS = 360
+PITCH_BINS = 1440
 
 # Audio sample rate
 SAMPLE_RATE = 22050 # hz
