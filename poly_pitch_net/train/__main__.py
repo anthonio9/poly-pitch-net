@@ -16,6 +16,13 @@ def parse_args():
         type=int,
         help='The index of the GPU to use for evaluation')
     parser.add_argument(
+        '-l',
+        '--loss',
+        type=str,
+        choices=[ppn.LOSS_ONE_HOT, ppn.LOSS_GAUSS],
+        help='Type of the used loss function, one hot vector, or gaussian blur',
+        required=True)
+    parser.add_argument(
         '-s', 
         '--register_silence',
         action="store_true",

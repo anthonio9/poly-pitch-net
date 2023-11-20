@@ -17,6 +17,7 @@ import wandb
 
 def prepare_and_run(model_type: str,
         gpu: int = None, 
+        loss: str = ppn.LOSS_ONE_HOT,
         register_silence: bool = False,
         use_wandb: bool = False):
 
@@ -32,8 +33,10 @@ def prepare_and_run(model_type: str,
             # Track hyperparameters and run metadata
             config={
                 "learning_rate": ppn.LEARNING_RATE,
-                "epochs": ppn.STEPS * 2,
+                "epochs": ppn.STEPS * 10,
                 "register_silence" : register_silence,
+                "loss" : loss,
+                "pitch_bins" : ppn.PITCH_BINS,
             })
 
     if not register_silence:
@@ -41,12 +44,14 @@ def prepare_and_run(model_type: str,
 
     run(model_type,
         gpu,
+        loss,
         register_silence,
         log_wandb)
 
 
 def run(model_type: str,
         gpu: int = None, 
+        loss: str = ppn.LOSS_ONE_HOT,
         register_silence: bool = False,
         log_wandb=None):
 
@@ -101,13 +106,14 @@ def run(model_type: str,
     model.change_device(device=gpu)
 
     print("Starting the training")
-    train(train_loader, val_loader, model, model_dir, log_wandb=log_wandb)
+    train(train_loader, val_loader, model, model_dir, loss_type=loss, log_wandb=log_wandb)
 
 def train(
         train_loader,
         val_loader,
         model,
         log_dir,
+        loss_type: str = ppn.LOSS_ONE_HOT,
         log_wandb=None):
 
     # Initialize a writer to log any reported results
@@ -121,7 +127,7 @@ def train(
     step, epoch = 0, 0
 
     # steps progress bar on the screen
-    progress = tqdm(range(ppn.STEPS * 2))
+    progress = tqdm(range(ppn.STEPS * 10))
 
     # train loss message on the screen
     tloss_log = tqdm(total=0, position=1, bar_format='{desc}')
@@ -130,7 +136,7 @@ def train(
     eloss_log = tqdm(total=0, position=2, bar_format='{desc}')
 
 
-    while step < ppn.STEPS * 2:
+    while step < ppn.STEPS * 10:
         model.train()
 
         train_losses = []
@@ -151,7 +157,8 @@ def train(
                 loss = ppn.train.loss(
                         model, 
                         output[ppn.KEY_PITCH_LOGITS],
-                        pitch_array.to(model.device))
+                        pitch_array.to(model.device),
+                        loss_type=loss_type)
                 train_losses.append(loss.item())
 
             # Zero the accumulated gradients
@@ -179,7 +186,7 @@ def train(
         tloss_log.set_description(f"Train loss: {train_losses}")
 
 
-        eval_loss, metric_dict = evaluate(val_loader, model)
+        eval_loss, metric_dict = evaluate(val_loader, model, loss_type)
 
         # log the evaluation loss
         writer.add_scalar(tag='eval_loss_' + ppn.LOSS_BCE,
@@ -221,7 +228,8 @@ def write_metrics(writer: SummaryWriter, step: int, metrics: dict):
 
 def evaluate(
         loader: torch.utils.data.DataLoader,
-        model):
+        model,
+        loss_type: str = ppn.LOSS_ONE_HOT):
     """
     Perform model evaluation.
     """
@@ -256,7 +264,8 @@ def evaluate(
                                register_silence=model.register_silence))
 
             # Compute losses
-            loss = ppn.train.loss(model, output[ppn.KEY_PITCH_LOGITS], pitch_array)
+            loss = ppn.train.loss(model, output[ppn.KEY_PITCH_LOGITS], pitch_array,
+                    loss_type=loss_type)
 
             eval_losses.append(loss.item())
 

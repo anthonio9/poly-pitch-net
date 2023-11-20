@@ -53,6 +53,12 @@ NORMALIZE_INPUT = True
 # Type of model normalization
 NORMALIZATION = 'batch'
 
+###############################################################################
+# LOSS TYPES
+###############################################################################
+
+LOSS_ONE_HOT = 'one-hot'
+LOSS_GAUSS = 'gauss-blur'
 
 ###############################################################################
 # GuitarSet Dataset parameters

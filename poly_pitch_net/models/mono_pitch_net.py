@@ -242,8 +242,8 @@ class MonoPitchBlock1D(nn.Sequential):
             self,
             in_channels: int,
             out_channels: int,
-            kernel_size: int=5,
-            padding: int=2,
+            kernel_size: int=15,
+            padding: int=7,
             dilation: int=1,
             ):
         layers = (
