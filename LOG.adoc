@@ -14,3 +14,5 @@ Investigation of PENN training input shape. FCNF0 config input data has input sh
 
 All the metric evaluation will be done using pitch only frames in the ground truth. This is how penn does it and it seems to be the better way.
 The labels with no information about pitch (just silence) should have their frequency or the pitch bin randomized.
+
+== 20.11.2023

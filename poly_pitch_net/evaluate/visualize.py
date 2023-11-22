@@ -59,7 +59,8 @@ def plot_poly_pitch(
         pitch_hat, 
         times, 
         pitch_gt=None,
-        freq_type='STFT'):
+        freq_type='STFT',
+        show_plot=True):
     """
     Plot the pitch on the frequency graph with matplotlib.
 
@@ -151,7 +152,10 @@ def plot_poly_pitch(
                          loc='upper left', borderaxespad=0.)
     # fig.colorbar(img, ax=ax, format="%+2.f dB", orientation="horizontal")
 
-    plt.show()
+    if show_plot:
+        plt.show()
+
+    return fig
 
 
 def plot_mono_pitch(
@@ -159,7 +163,8 @@ def plot_mono_pitch(
     pitch_hat, 
     times, 
     pitch_gt=None,
-    freq_type='STFT'):
+    freq_type='STFT',
+    show_plot=True):
     """Plot mono pitch with ground truth
 
     Args:
@@ -175,6 +180,10 @@ def plot_mono_pitch(
         pitch_gt (numpy array)
             Array with ground truth pitch values in Hz from one string
             Should be of shape [T]
+
+    Returns:
+        fig (matplotlib.plt figure)
+            Matplotlib figure containing the pitch plot
     """
     assert len(pitch_hat.shape) == 1
 
@@ -186,4 +195,4 @@ def plot_mono_pitch(
 
         assert len(pitch_gt.shape) == 2
 
-    plot_poly_pitch(freq, pitch_hat, times, pitch_gt, freq_type)
+    return plot_poly_pitch(freq, pitch_hat, times, pitch_gt, freq_type, show_plot=show_plot)

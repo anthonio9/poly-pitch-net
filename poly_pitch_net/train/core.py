@@ -186,7 +186,10 @@ def train(
         tloss_log.set_description(f"Train loss: {train_losses}")
 
 
-        eval_loss, metric_dict = evaluate(val_loader, model, loss_type)
+        if step % 100 == 0:
+            eval_loss, metric_dict = evaluate(val_loader, model, loss_type, log_wandb)
+        else:
+            eval_loss, metric_dict = evaluate(val_loader, model, loss_type, None)
 
         # log the evaluation loss
         writer.add_scalar(tag='eval_loss_' + ppn.LOSS_BCE,
@@ -229,7 +232,8 @@ def write_metrics(writer: SummaryWriter, step: int, metrics: dict):
 def evaluate(
         loader: torch.utils.data.DataLoader,
         model,
-        loss_type: str = ppn.LOSS_ONE_HOT):
+        loss_type: str = ppn.LOSS_ONE_HOT, 
+        log_wandb=None):
     """
     Perform model evaluation.
     """
@@ -238,6 +242,10 @@ def evaluate(
 
     with torch.no_grad():
         model.eval()
+
+        output = None
+        pitch_array = None
+        batch = None
 
         for batch in loader:
             # set the pitch names to something
@@ -268,6 +276,20 @@ def evaluate(
                     loss_type=loss_type)
 
             eval_losses.append(loss.item())
+
+        if log_wandb is not None:
+            out_hz_npy = output[ppn.KEY_PITCH_ARRAY_HZ].cpu().numpy()[0, :]
+            pitch_array_npy = pitch_array.cpu().numpy()[0, :, :]
+            times = batch[ppn.KEY_TIMES].cpu().numpy()[0, :]
+            audio = batch[ppn.KEY_AUDIO].cpu().numpy()[0, :]
+
+            fig = ppn.evaluate.plot_mono_pitch(
+                    freq=audio,
+                    pitch_hat=out_hz_npy,
+                    pitch_gt=pitch_array_npy,
+                    times=times)
+            
+            log_wandb.log({"eval_chart" : fig})
 
     eval_losses = sum(eval_losses) / len(eval_losses)
 

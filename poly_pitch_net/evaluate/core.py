@@ -67,7 +67,8 @@ def run_evaluation(
 
         if 'MonoPitchNet1D' in model.model_name():
             # choose string 3
-            pitch = output[ppn.KEY_PITCH_ARRAY_CENTS].cpu().numpy()[3, :]
+            # pitch = output[ppn.KEY_PITCH_ARRAY_CENTS].cpu().numpy()[3, :]
+            pitch = output[ppn.KEY_PITCH_ARRAY_CENTS].cpu().numpy()[0, :]
             pitch = ppn.tools.convert.cents_to_frequency(pitch, model.register_silence)
 
             ppn.evaluate.plot_mono_pitch(freq=features,
