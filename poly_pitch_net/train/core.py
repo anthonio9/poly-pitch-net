@@ -186,7 +186,8 @@ def train(
         tloss_log.set_description(f"Train loss: {train_losses}")
 
 
-        if step % 100 == 0:
+        # because there's 8 batches in every train loader
+        if step % 80 == 0:
             eval_loss, metric_dict = evaluate(val_loader, model, loss_type, log_wandb)
         else:
             eval_loss, metric_dict = evaluate(val_loader, model, loss_type, None)
@@ -279,15 +280,19 @@ def evaluate(
 
         if log_wandb is not None:
             out_hz_npy = output[ppn.KEY_PITCH_ARRAY_HZ].cpu().numpy()[0, :]
-            pitch_array_npy = pitch_array.cpu().numpy()[0, :, :]
-            times = batch[ppn.KEY_TIMES].cpu().numpy()[0, :]
-            audio = batch[ppn.KEY_AUDIO].cpu().numpy()[0, :]
+            pitch_array_npy = batch[ppn.KEY_PITCH_ARRAY].numpy()[0, :]
+            times = batch[ppn.KEY_TIMES].numpy()[0, :]
+            audio = batch[ppn.KEY_AUDIO].numpy()[0, :]
+            features = librosa.stft(audio, hop_length=ppn.GSET_HOP_LEN,
+                                    win_length=ppn.GSET_HOP_LEN * 4,
+                                    n_fft=ppn.GSET_HOP_LEN * 4)
 
             fig = ppn.evaluate.plot_mono_pitch(
-                    freq=audio,
+                    freq=features,
                     pitch_hat=out_hz_npy,
                     pitch_gt=pitch_array_npy,
-                    times=times)
+                    times=times,
+                    show_plot=False)
             
             log_wandb.log({"eval_chart" : fig})
 

@@ -121,7 +121,7 @@ def plot_poly_pitch(
     if pitch_gt is not None:
         lines_gt, proxies_gt, string_labels_gt = pitch_to_lines(pitch_gt, 
                                                                 times, 
-                                                                linestyle='dotted',
+                                                                linestyle='dashdot',
                                                                 label='GT String')
         ax.add_collection(lines_gt)
 
