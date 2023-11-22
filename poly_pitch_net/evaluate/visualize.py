@@ -6,6 +6,8 @@ import librosa
 import plotly.express as px
 import torch
 
+import poly_pitch_net as ppn
+
 
 def onehot_with_ignore_label(labels, num_class, ignore_label):
     dummy_label = num_class + 1
@@ -25,16 +27,9 @@ def onehot_with_ignore_label(labels, num_class, ignore_label):
     return one_hot_labels
 
 
-def plot_logits(logits: torch.Tensor, pitch_array: torch.Tensor, string: int=-1):
+def plot_logits(logits: torch.Tensor, pitch_array: torch.Tensor):
     assert len(logits.shape) == 3
-    assert len(pitch_array.shape) == 3
-
-    # convert to numpy
-    logits = logits.cpu().numpy()
-    pitch_array = pitch_array.cpu().numpy()
-
-    if string >= 0:
-        pitch_array = pitch_array[:, string, :]
+    assert len(pitch_array.shape) == 2
 
     # generate the pitch_array bins
     pitch_bins = ppn.tools.frequency_to_bins(pitch_array)
@@ -43,16 +38,25 @@ def plot_logits(logits: torch.Tensor, pitch_array: torch.Tensor, string: int=-1)
             pitch_bins, ppn.PITCH_BINS, -1)
 
     logits = logits.permute(0, 2, 1)
+    logits = torch.nn.functional.softmax(logits, dim=-1)
     logits = logits[0, :, :]
     pitch_bins_1hot = pitch_bins_1hot[0, :, :]
 
     assert logits.shape == pitch_bins_1hot.shape
 
-    fix = px.imxshow(
-            logits, 
+    # convert to numpy
+    logits = logits.cpu().numpy()
+    pitch_bins_1hot = pitch_bins_1hot.cpu().numpy()
+
+    logits_and_gnd = np.concatenate((logits, pitch_bins_1hot), axis=1)
+
+    fig = px.imshow(
+            logits_and_gnd, 
             color_continuous_scale=px.colors.sequential.Cividis_r)
 
-    fix.show()
+    fig.add_vline(x=ppn.PITCH_BINS, line_dash="dash", line_color="green", line_width=2)
+
+    return fig
 
 
 

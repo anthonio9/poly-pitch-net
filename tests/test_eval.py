@@ -97,6 +97,7 @@ def test_plot_logits():
     batch = next(loader)
 
     logits = torch.arange(ppn.PITCH_BINS) / ppn.PITCH_BINS
-    logits = logits.expand(30, ppn.PITCH_BINS, 200)
+    logits = logits.expand(30, 200, ppn.PITCH_BINS)
+    logits = logits.permute(0, 2, 1)
 
     ppn.evaluate.plot_logits(logits, batch[ppn.KEY_PITCH_ARRAY], 3)

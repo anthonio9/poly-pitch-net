@@ -279,20 +279,9 @@ def evaluate(
             eval_losses.append(loss.item())
 
         if log_wandb is not None:
-            out_hz_npy = output[ppn.KEY_PITCH_ARRAY_HZ].cpu().numpy()[0, :]
-            pitch_array_npy = batch[ppn.KEY_PITCH_ARRAY].numpy()[0, :]
-            times = batch[ppn.KEY_TIMES].numpy()[0, :]
-            audio = batch[ppn.KEY_AUDIO].numpy()[0, :]
-            features = librosa.stft(audio, hop_length=ppn.GSET_HOP_LEN,
-                                    win_length=ppn.GSET_HOP_LEN * 4,
-                                    n_fft=ppn.GSET_HOP_LEN * 4)
-
-            fig = ppn.evaluate.plot_mono_pitch(
-                    freq=features,
-                    pitch_hat=out_hz_npy,
-                    pitch_gt=pitch_array_npy,
-                    times=times,
-                    show_plot=False)
+            fig = ppn.evaluate.plot_logits(
+                    output[ppn.KEY_PITCH_LOGITS],
+                    batch[ppn.KEY_PITCH_ARRAY])
             
             log_wandb.log({"eval_chart" : fig})
 
