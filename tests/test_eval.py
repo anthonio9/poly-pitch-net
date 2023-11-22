@@ -1,5 +1,6 @@
 import poly_pitch_net as ppn
 import librosa
+import torch
 
 
 def test_plot_poly_pitch():
@@ -87,3 +88,15 @@ def test_plot_poly_pitch_no_features():
                                  pitch_hat=pitch_gt,
                                  times=times, 
                                  freq_type='STFT')
+
+
+def test_plot_logits():
+    loader = ppn.datasets.loader('pytest', data_proc_type=None)
+
+    loader = iter(loader)
+    batch = next(loader)
+
+    logits = torch.arange(ppn.PITCH_BINS) / ppn.PITCH_BINS
+    logits = logits.expand(30, ppn.PITCH_BINS, 200)
+
+    ppn.evaluate.plot_logits(logits, batch[ppn.KEY_PITCH_ARRAY], 3)

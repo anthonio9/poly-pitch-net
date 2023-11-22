@@ -3,8 +3,57 @@ from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
 import numpy as np
 import librosa
+import plotly.express as px
+import torch
 
-import poly_pitch_net as ppn
+
+def onehot_with_ignore_label(labels, num_class, ignore_label):
+    dummy_label = num_class + 1
+
+    # set the mask for the ingored labels
+    mask = labels == ignore_label
+    modified_labels = labels.clone()
+
+    # set ignored labels to max value
+    modified_labels[mask] = num_class
+
+    # one-hot encode the modified labels
+    one_hot_labels = torch.nn.functional.one_hot(modified_labels, num_classes=dummy_label)
+
+    # remove the last row in the one-hot encoding
+    one_hot_labels = one_hot_labels[:, :, :-1]
+    return one_hot_labels
+
+
+def plot_logits(logits: torch.Tensor, pitch_array: torch.Tensor, string: int=-1):
+    assert len(logits.shape) == 3
+    assert len(pitch_array.shape) == 3
+
+    # convert to numpy
+    logits = logits.cpu().numpy()
+    pitch_array = pitch_array.cpu().numpy()
+
+    if string >= 0:
+        pitch_array = pitch_array[:, string, :]
+
+    # generate the pitch_array bins
+    pitch_bins = ppn.tools.frequency_to_bins(pitch_array)
+    pitch_bins[pitch_array == 0] = -1
+    pitch_bins_1hot = onehot_with_ignore_label(
+            pitch_bins, ppn.PITCH_BINS, -1)
+
+    logits = logits.permute(0, 2, 1)
+    logits = logits[0, :, :]
+    pitch_bins_1hot = pitch_bins_1hot[0, :, :]
+
+    assert logits.shape == pitch_bins_1hot.shape
+
+    fix = px.imxshow(
+            logits, 
+            color_continuous_scale=px.colors.sequential.Cividis_r)
+
+    fix.show()
+
 
 
 def pitch_to_lines(pitch_array, times, linestyle='solid', label='String'):
