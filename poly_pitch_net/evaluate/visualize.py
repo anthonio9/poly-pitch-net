@@ -27,28 +27,38 @@ def onehot_with_ignore_label(labels, num_class, ignore_label):
     return one_hot_labels
 
 
-def plot_logits(logits: torch.Tensor, pitch_array: torch.Tensor):
+def plot_logits(logits: torch.Tensor, 
+                pitch_array: torch.Tensor,
+                loss_type: str = ppn.LOSS_ONE_HOT):
     assert len(logits.shape) == 3
     assert len(pitch_array.shape) == 2
 
     # generate the pitch_array bins
     pitch_bins = ppn.tools.frequency_to_bins(pitch_array)
     pitch_bins[pitch_array == 0] = -1
-    pitch_bins_1hot = onehot_with_ignore_label(
-            pitch_bins, ppn.PITCH_BINS, -1)
 
     logits = logits.permute(0, 2, 1)
     logits = torch.nn.functional.softmax(logits, dim=-1)
     logits = logits[0, :, :]
-    pitch_bins_1hot = pitch_bins_1hot[0, :, :]
 
-    assert logits.shape == pitch_bins_1hot.shape
+    if loss_type == ppn.LOSS_ONE_HOT:
+        pitch_bins_1hot = onehot_with_ignore_label(
+                pitch_bins, ppn.PITCH_BINS, -1)
+        pitch_bins_1hot = pitch_bins_1hot[0, :, :]
+
+        assert logits.shape == pitch_bins_1hot.shape
+
+        ground_truth_logits = pitch_bins_1hot
+
+    elif loss_type == ppn.LOSS_GAUSS:
+        # implement the gaussian blurr
+        assert 0
 
     # convert to numpy
     logits = logits.cpu().numpy()
-    pitch_bins_1hot = pitch_bins_1hot.cpu().numpy()
+    ground_truth_logits = ground_truth_logits.cpu().numpy()
 
-    logits_and_gnd = np.concatenate((logits, pitch_bins_1hot), axis=1)
+    logits_and_gnd = np.concatenate((logits, ground_truth_logits), axis=1)
 
     fig = px.imshow(
             logits_and_gnd, 
@@ -57,7 +67,6 @@ def plot_logits(logits: torch.Tensor, pitch_array: torch.Tensor):
     fig.add_vline(x=ppn.PITCH_BINS, line_dash="dash", line_color="green", line_width=2)
 
     return fig
-
 
 
 def pitch_to_lines(pitch_array, times, linestyle='solid', label='String'):

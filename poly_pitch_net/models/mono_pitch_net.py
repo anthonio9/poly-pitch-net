@@ -158,7 +158,7 @@ class MonoPitchNetTime(PitchNet):
             MonoPitchBlockTime(32, 128, 66),
             MonoPitchBlockTime(128, 256, 35),
             MonoPitchBlockTime(256, 512, 4),
-            torch.nn.Conv1d(512, penn.PITCH_BINS + int(self.register_silence), 4)
+            torch.nn.Conv1d(512, ppn.PITCH_BINS + int(self.register_silence), 4)
                 )
 
         self.sequence = torch.nn.Sequential(*layers)
