@@ -35,13 +35,13 @@ def plot_logits(logits: torch.Tensor,
 
     # generate the pitch_array bins
     pitch_bins = ppn.tools.frequency_to_bins(pitch_array)
-    pitch_bins[pitch_array == 0] = -1
 
     logits = logits.permute(0, 2, 1)
     logits = torch.nn.functional.softmax(logits, dim=-1)
     logits = logits[0, :, :]
 
     if loss_type == ppn.LOSS_ONE_HOT:
+        pitch_bins[pitch_array == 0] = -1
         pitch_bins_1hot = onehot_with_ignore_label(
                 pitch_bins, ppn.PITCH_BINS, -1)
         pitch_bins_1hot = pitch_bins_1hot[0, :, :]
@@ -52,19 +52,39 @@ def plot_logits(logits: torch.Tensor,
 
     elif loss_type == ppn.LOSS_GAUSS:
         # implement the gaussian blurr
-        assert 0
+        pitch_bins = pitch_bins[0, :]
+        pitch_bins = pitch_bins.flatten()
+
+        cents = ppn.tools.convert.bins_to_cents(
+                torch.arange(ppn.PITCH_BINS))[:, None]
+
+        # Create normal distributions
+        distributions = torch.distributions.Normal(
+                pitch_bins, 
+                25)
+
+        # Sample normal distributions
+        pitch_bins_gauss = torch.exp(distributions.log_prob(cents)).permute(1, 0)
+
+        # Normalize
+        pitch_bins_gauss = pitch_bins_gauss / (pitch_bins_gauss.max(dim=1, keepdims=True).values + 1e-8)
+
+        # set rows where there was no pitch to 0
+        pitch_bins_gauss[pitch_bins == 0, :] = 0
+
+        ground_truth_logits = pitch_bins_gauss
 
     # convert to numpy
     logits = logits.cpu().numpy()
     ground_truth_logits = ground_truth_logits.cpu().numpy()
 
-    logits_and_gnd = np.concatenate((logits, ground_truth_logits), axis=1)
+    logits_and_gnd = np.concatenate((logits, ground_truth_logits), axis=0)
 
     fig = px.imshow(
             logits_and_gnd, 
             color_continuous_scale=px.colors.sequential.Cividis_r)
 
-    fig.add_vline(x=ppn.PITCH_BINS, line_dash="dash", line_color="green", line_width=2)
+    fig.add_hline(y=logits.shape[0], line_dash="dash", line_color="green", line_width=2)
 
     return fig
 

@@ -33,7 +33,7 @@ def prepare_and_run(model_type: str,
             # Track hyperparameters and run metadata
             config={
                 "learning_rate": ppn.LEARNING_RATE,
-                "epochs": ppn.STEPS * 10,
+                "epochs": ppn.STEPS * 4,
                 "register_silence" : register_silence,
                 "loss" : loss,
                 "pitch_bins" : ppn.PITCH_BINS,
@@ -127,7 +127,7 @@ def train(
     step, epoch = 0, 0
 
     # steps progress bar on the screen
-    progress = tqdm(range(ppn.STEPS * 10))
+    progress = tqdm(range(ppn.STEPS * 4))
 
     # train loss message on the screen
     tloss_log = tqdm(total=0, position=1, bar_format='{desc}')
@@ -136,7 +136,7 @@ def train(
     eloss_log = tqdm(total=0, position=2, bar_format='{desc}')
 
 
-    while step < ppn.STEPS * 10:
+    while step < ppn.STEPS * 4:
         model.train()
 
         train_losses = []
@@ -281,7 +281,8 @@ def evaluate(
         if log_wandb is not None:
             fig = ppn.evaluate.plot_logits(
                     output[ppn.KEY_PITCH_LOGITS],
-                    batch[ppn.KEY_PITCH_ARRAY])
+                    batch[ppn.KEY_PITCH_ARRAY],
+                    loss_type = loss_type)
             
             log_wandb.log({"eval_chart" : fig})
 
