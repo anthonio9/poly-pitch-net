@@ -4,6 +4,7 @@ from matplotlib.lines import Line2D
 import numpy as np
 import librosa
 import plotly.express as px
+import plotly.graph_objects as go
 import torch
 
 import poly_pitch_net as ppn
@@ -85,6 +86,34 @@ def plot_logits(logits: torch.Tensor,
             color_continuous_scale=px.colors.sequential.Cividis_r)
 
     fig.add_hline(y=logits.shape[0], line_dash="dash", line_color="green", line_width=2)
+
+    return fig
+
+
+def plotly_pitch(pitch_hat, pitch_gnd, times):
+    # cast to numpy
+    pitch_hat = pitch_hat.cpu().numpy()
+    pitch_gnd = pitch_gnd.cpu().numpy()
+    times = times.cpu().numpy()
+
+    assert len(pitch_hat.shape) == 2
+    assert len(pitch_gnd.shape) == 2
+    assert len(times.shape) == 2
+
+    pitch_hat = pitch_hat[0, :]
+    pitch_gnd = pitch_gnd[0, :]
+    times = times[0, :]
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=times, y=pitch_hat, name="pitch_hat",
+        line=dict(color='firebrick', width=3)))
+    fig.add_trace(go.Scatter(
+        x=times, y=pitch_gnd, name="pitch_gnd",
+        line=dict(color='royalblue', width=3)))
+
+    fig.update_layout(title='Recognized pitch vs ground truth',
+            xaxis_title='time (s)', yaxis_title='Frequency (Hz)')
 
     return fig
 

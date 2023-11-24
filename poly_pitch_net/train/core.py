@@ -283,8 +283,14 @@ def evaluate(
                     output[ppn.KEY_PITCH_LOGITS],
                     batch[ppn.KEY_PITCH_ARRAY],
                     loss_type = loss_type)
+
+            fig2 = ppn.evaluate.plotly_pitch(
+                    output[ppn.KEY_PITCH_ARRAY_HZ],
+                    batch[ppn.KEY_PITCH_ARRAY],
+                    batch[ppn.KEY_TIMES])
             
-            log_wandb.log({"eval_chart" : fig})
+            log_wandb.log({"logits_chart" : fig})
+            log_wandb.log({"pitch_chart" : fig2})
 
     eval_losses = sum(eval_losses) / len(eval_losses)
 
