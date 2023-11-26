@@ -30,6 +30,8 @@ def poly_pitch_loss(logits, pitch, register_silence=False, loss_type: str=ppn.LO
         pitch_bins = pitch_bins_1hot
 
     elif loss_type == ppn.LOSS_GAUSS:
+        pitch_bins = ppn.tools.bins_to_cents(pitch_bins)
+
         loss.cents = ppn.tools.convert.bins_to_cents(
                 torch.arange(no_all_bins))[:, None]
 

@@ -34,14 +34,14 @@ def plot_logits(logits: torch.Tensor,
     assert len(logits.shape) == 3
     assert len(pitch_array.shape) == 2
 
-    # generate the pitch_array bins
-    pitch_bins = ppn.tools.frequency_to_bins(pitch_array)
-
     logits = logits.permute(0, 2, 1)
     logits = torch.nn.functional.softmax(logits, dim=-1)
     logits = logits[0, :, :]
 
     if loss_type == ppn.LOSS_ONE_HOT:
+        # generate the pitch_array bins
+        pitch_bins = ppn.tools.frequency_to_bins(pitch_array)
+
         pitch_bins[pitch_array == 0] = -1
         pitch_bins_1hot = onehot_with_ignore_label(
                 pitch_bins, ppn.PITCH_BINS, -1)
@@ -53,6 +53,10 @@ def plot_logits(logits: torch.Tensor,
 
     elif loss_type == ppn.LOSS_GAUSS:
         # implement the gaussian blurr
+
+        # generate the pitch_array bins
+        pitch_bins = ppn.tools.frequency_to_cents(pitch_array)
+
         pitch_bins = pitch_bins[0, :]
         pitch_bins = pitch_bins.flatten()
 
