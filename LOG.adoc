@@ -16,3 +16,11 @@ All the metric evaluation will be done using pitch only frames in the ground tru
 The labels with no information about pitch (just silence) should have their frequency or the pitch bin randomized.
 
 == 20.11.2023
+
+== 24.11.2023
+
+After the investigation of the logits and ground truth plots it seems obvious that post processing on logits trained with the gaussian blur must be broken somehow, as the plots prove that the accuracy should be much higher and actually seems to be better than the accuracy of one-hot loss approach. It definitely is much over 0%, however right now metrics estimate 0% of accuracy. Hopefully plotting the pitch will reveal what going on.
+
+== 27.11.2023
+
+As suspected, the accuracy of the gaussian blur approach is indeed much higher, similar to the one-hot approach. The difference between the two approaches is that the gauss-blur converges much quicker. Perhaps up to two times as quick as one-hot.

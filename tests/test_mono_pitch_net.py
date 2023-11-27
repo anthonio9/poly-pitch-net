@@ -64,3 +64,14 @@ def test_mpn_loss(cfg_small):
     pitch_array = torch.arange(120, 1200, 30)[:cfg.no_frames]
 
     ppn.train.mono_pitch_loss(logits, pitch_array)
+
+
+def test_mpn_2d_pre_proc():
+    loader = iter(ppn.datasets.loader(partition='pytest'))
+    batch = next(loader)
+
+    model = ppn.models.MonoPitchNet2D(no_pitch_bins=1440,
+                                      cqt=True, audio=True)
+
+    batch_proc = model.pre_proc(batch)
+    list(batch_proc[ppn.KEY_FEATURES].shape) == [30, 2, 256, 200]

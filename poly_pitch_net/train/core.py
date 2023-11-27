@@ -2,7 +2,7 @@ import poly_pitch_net as ppn
 from poly_pitch_net.datasets.guitarset import GuitarSetPPN
 from poly_pitch_net.models import FretNetCrepe
 from poly_pitch_net.models import MonoPitchNet1D
-from poly_pitch_net.models import MonoPitchNetTime
+from poly_pitch_net.models import MonoPitchNet2D
 import amt_tools.tools
 from amt_tools.features import HCQT
 
@@ -63,8 +63,20 @@ def run(model_type: str,
         model = MonoPitchNet1D(
                 dim_in=ppn.HCQT_DIM_IN,
                 no_pitch_bins=ppn.PITCH_BINS,
-                register_silence=register_silence
-                )
+                register_silence=register_silence)
+
+    elif 'mono2d' in model_type:
+        EX_NAME = '_'.join([MonoPitchNet2D.model_name(),
+                            GuitarSetPPN.dataset_name(),
+                            HCQT.features_name()])
+
+        model = MonoPitchNet2D(
+                no_pitch_bins=ppn.PITCH_BINS,
+                register_silence=register_silence,
+                string=3,
+                cqt=True,
+                audio=True)
+
 
     elif 'poly' in model_type:
         EX_NAME = '_'.join([FretNetCrepe.model_name(),
@@ -74,20 +86,7 @@ def run(model_type: str,
         model = FretNetCrepe(
                 dim_in=ppn.HCQT_DIM_IN,
                 in_channels=ppn.HCQT_NO_HARMONICS,
-                no_pitch_bins=ppn.PITCH_BINS
-                )
-
-    elif 'monotime' in model_type:
-        EX_NAME = '_'.join([MonoPitchNetTime.model_name(),
-                            GuitarSetPPN.dataset_name(),
-                            HCQT.features_name()])
-
-        model = MonoPitchNetTime(
-                dim_in=ppn.GSET_HOP_LEN,
-                no_pitch_bins=ppn.PITCH_BINS,
-                register_silence=register_silence,
-                string=3
-                )
+                no_pitch_bins=ppn.PITCH_BINS)
 
     else:
         print(f"{model_type} is not supported!")

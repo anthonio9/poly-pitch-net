@@ -8,7 +8,7 @@ def parse_args():
     parser.add_argument(
         '--model_type',
         type=str,
-        choices=['poly', 'mono1d', 'monotime'],
+        choices=['poly', 'mono1d', 'mono2d'],
         help='Type of the trained model, polyphonic or monophonic',
         required=True)
     parser.add_argument(

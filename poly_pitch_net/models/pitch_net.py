@@ -8,6 +8,8 @@ class PitchNet(nn.Module):
 
     def __init__(self):
         nn.Module.__init__(self)
+        self.device = torch.device('cpu')
+        
 
     @classmethod
     def model_name(cls):
