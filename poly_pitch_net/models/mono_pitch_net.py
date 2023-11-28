@@ -4,6 +4,7 @@ from poly_pitch_net.models import PitchNet
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
+from typing import Tuple
 
 
 class MonoPitchNet1D(PitchNet):
@@ -172,16 +173,26 @@ class MonoPitchNet2D(MonoPitchNet1D):
         self.register_silence = register_silence
         self.string = string
 
-        self.conv1 = MonoPitchBlock2D(self.dim_in, 256)
-        self.conv2 = MonoPitchBlock2D(256, 32)
-        self.conv3 = MonoPitchBlock2D(32, 32)
-        self.conv4 = MonoPitchBlock2D(32, 128)
-        self.conv5 = MonoPitchBlock2D(128, 256)
-        self.conv6 = MonoPitchBlock2D(256, 512)
+        # below in the MonoPitchBlock2D, when passing the kernel_size, padding
+        # and pooling tuples (x, y), x is related to 3rd dim, y to 4th dim (time)
+
+        self.conv1 = MonoPitchBlock2D(
+                self.dim_in, 256, 
+                kernel_size=(3, 1), padding=(1, 0))
+        self.conv2 = MonoPitchBlock2D(
+                256, 32,
+                kernel_size=(3, 1), padding=(1, 0))
+        self.conv3 = MonoPitchBlock2D(
+                32, 32,
+                kernel_size=(3, 5), padding=(1, 2), pooling=(2, 1))
+        self.conv4 = MonoPitchBlock2D(32, 128, pooling=(2, 1))
+        self.conv5 = MonoPitchBlock2D(128, 256, pooling=(4, 1))
+        self.conv6 = MonoPitchBlock2D(256, 512, pooling=(4, 1))
 
         self.pitch_head = nn.Conv1d(
-                512,
-                no_pitch_bins + int(register_silence), self.dim_in)
+                in_channels=512 * 4,
+                out_channels=no_pitch_bins + int(register_silence),
+                kernel_size=1)
 
     def pre_proc(self, input: dict):
         # choose HCQT channel 0
@@ -262,6 +273,8 @@ class MonoPitchNet2D(MonoPitchNet1D):
         embeddings = self.conv4(embeddings)
         embeddings = self.conv5(embeddings)
         embeddings = self.conv6(embeddings)
+
+        embeddings = torch.flatten(embeddings, start_dim=1, end_dim=2)
         embeddings = self.pitch_head(embeddings)
 
         # Initialize an empty dictionary to hold output
@@ -300,9 +313,10 @@ class MonoPitchBlock2D(nn.Sequential):
             self,
             in_channels: int,
             out_channels: int,
-            kernel_size: int=(5, 5),
-            padding: int=(2, 2),
-            dilation: int=(1, 1),
+            kernel_size: Tuple[int, int]=(5, 5),
+            padding: Tuple[int, int]=(2, 2),
+            dilation: Tuple[int, int]=(1, 1),
+            pooling: Tuple[int, int]=None
             ):
         layers = (
                 nn.Conv2d(in_channels=in_channels,
@@ -311,8 +325,10 @@ class MonoPitchBlock2D(nn.Sequential):
                           padding=padding,
                           dilation=dilation),
                 nn.BatchNorm2d(out_channels),
-                nn.ReLU()
-                )
+                nn.ReLU())
+
+        if pooling is not None:
+            layers += (nn.MaxPool2d(pooling), )
 
         super().__init__(*layers)
 

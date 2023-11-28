@@ -74,4 +74,15 @@ def test_mpn_2d_pre_proc():
                                       cqt=True, audio=True)
 
     batch_proc = model.pre_proc(batch)
-    list(batch_proc[ppn.KEY_FEATURES].shape) == [30, 2, 256, 200]
+    assert list(batch_proc[ppn.KEY_FEATURES].shape) == [30, 2, 256, 200]
+
+def test_mpn_2d_forward():
+    loader = iter(ppn.datasets.loader(partition='pytest'))
+    batch = next(loader)
+
+    model = ppn.models.MonoPitchNet2D(no_pitch_bins=1440,
+                                      cqt=True, audio=True)
+
+    output = model(batch)
+    assert list(output[ppn.KEY_PITCH_LOGITS].shape) == [30, 1440, 200]
+
