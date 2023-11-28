@@ -82,6 +82,9 @@ def test_mpn_2d_forward():
 
     model = ppn.models.MonoPitchNet2D(no_pitch_bins=1440,
                                       cqt=True, audio=True)
+    model.change_device(0)
+
+    breakpoint()
 
     output = model(batch)
     assert list(output[ppn.KEY_PITCH_LOGITS].shape) == [30, 1440, 200]

@@ -28,15 +28,16 @@ def prepare_and_run(model_type: str,
 
         log_wandb = wandb.init(
             # Set the project where this run will be logged
-            project="MonoPitchNet1D",
+            project="MonoPitchNet",
 
             # Track hyperparameters and run metadata
             config={
                 "learning_rate": ppn.LEARNING_RATE,
-                "epochs": ppn.STEPS * 4,
+                "epochs": ppn.STEPS // 2,
                 "register_silence" : register_silence,
                 "loss" : loss,
                 "pitch_bins" : ppn.PITCH_BINS,
+                "model_type" : model_type,
             })
 
     if not register_silence:
@@ -92,6 +93,9 @@ def run(model_type: str,
         print(f"{model_type} is not supported!")
         return
 
+    if log_wandb is not None:
+        log_wandb.config["architecture"] = str(model)
+
     # Create the root directory for the experiment files
     experiment_dir = ppn.tools.misc.get_project_root().parent / '..' / 'generated' / 'experiments' / EX_NAME
 
@@ -126,7 +130,7 @@ def train(
     step, epoch = 0, 0
 
     # steps progress bar on the screen
-    progress = tqdm(range(ppn.STEPS * 4))
+    progress = tqdm(range(ppn.STEPS // 2))
 
     # train loss message on the screen
     tloss_log = tqdm(total=0, position=1, bar_format='{desc}')
@@ -135,7 +139,7 @@ def train(
     eloss_log = tqdm(total=0, position=2, bar_format='{desc}')
 
 
-    while step < ppn.STEPS * 4:
+    while step < ppn.STEPS // 2:
         model.train()
 
         train_losses = []

@@ -181,13 +181,19 @@ class MonoPitchNet2D(MonoPitchNet1D):
                 kernel_size=(3, 1), padding=(1, 0))
         self.conv2 = MonoPitchBlock2D(
                 256, 32,
-                kernel_size=(3, 1), padding=(1, 0))
+                kernel_size=(5, 1), padding=(2, 0), pooling=(2, 1))
         self.conv3 = MonoPitchBlock2D(
                 32, 32,
-                kernel_size=(3, 5), padding=(1, 2), pooling=(2, 1))
-        self.conv4 = MonoPitchBlock2D(32, 128, pooling=(2, 1))
-        self.conv5 = MonoPitchBlock2D(128, 256, pooling=(4, 1))
-        self.conv6 = MonoPitchBlock2D(256, 512, pooling=(4, 1))
+                kernel_size=(32, 5), padding=(0, 2))
+        self.conv4 = MonoPitchBlock2D(
+                32, 128,
+                kernel_size=(32, 5), padding=(0, 2))
+        self.conv5 = MonoPitchBlock2D(
+                128, 256,
+                kernel_size=(32, 5), padding=(0, 2))
+        self.conv6 = MonoPitchBlock2D(
+                256, 512,
+                kernel_size=(32, 5), padding=(0, 2))
 
         self.pitch_head = nn.Conv1d(
                 in_channels=512 * 4,
@@ -198,6 +204,7 @@ class MonoPitchNet2D(MonoPitchNet1D):
         # choose HCQT channel 0
         assert len(input[ppn.KEY_FEATURES].shape) == 4
         input[ppn.KEY_FEATURES] = input[ppn.KEY_FEATURES][:, 0, :, :]
+        input[ppn.KEY_FEATURES] = input[ppn.KEY_FEATURES][:, None, :, :]
 
         # choose string 3
         assert len(input[ppn.KEY_PITCH_ARRAY].shape) == 3
@@ -232,7 +239,7 @@ class MonoPitchNet2D(MonoPitchNet1D):
             feats_cqt = F.pad(feats_cqt, pad=[0, 0, 0, pad_right])
 
             # add empty dimention (make it the 2nd dimention) to audio and cqt
-            feats_cqt = feats_cqt[:, None, :, :]
+            # feats_cqt = feats_cqt[:, None, :, :]
             feats_audio = feats_audio[:, None, :, :]
             
             assert feats_cqt.shape[1] == 1
