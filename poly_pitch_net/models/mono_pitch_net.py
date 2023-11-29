@@ -188,22 +188,22 @@ class MonoPitchNet2D(MonoPitchNet1D):
                 kernel_size=(3, 1), padding=(1, 0))
         self.conv2 = MonoPitchBlock2D(
                 256, 32,
-                kernel_size=(5, 1), padding=(2, 0), pooling=(2, 1))
+                kernel_size=(5, 1), padding=(0, 0), pooling=(2, 1))
         self.conv3 = MonoPitchBlock2D(
                 32, 32,
-                kernel_size=(32, 5), padding=(0, 2))
+                kernel_size=(7, 5), padding=(0, 2), pooling=(2, 1))
         self.conv4 = MonoPitchBlock2D(
                 32, 128,
-                kernel_size=(32, 5), padding=(0, 2))
+                kernel_size=(20, 5), padding=(0, 2))
         self.conv5 = MonoPitchBlock2D(
                 128, 256,
-                kernel_size=(32, 5), padding=(0, 2))
+                kernel_size=(20, 5), padding=(0, 2))
         self.conv6 = MonoPitchBlock2D(
                 256, 512,
-                kernel_size=(32, 5), padding=(0, 2))
+                kernel_size=(20, 5), padding=(0, 2))
 
         self.pitch_head = nn.Conv1d(
-                in_channels=512 * 4,
+                in_channels=512 * 3,
                 out_channels=no_pitch_bins + int(register_silence),
                 kernel_size=1)
 
