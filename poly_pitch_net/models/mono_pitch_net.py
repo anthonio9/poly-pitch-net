@@ -189,25 +189,37 @@ class MonoPitchNet2D(MonoPitchNet1D):
 
         self.conv1 = MonoPitchBlock2D(
                 self.dim_in, 256, 
-                kernel_size=(3, 1), padding=(1, 0))
+                kernel_size=(3, 3), padding=(1, 1), pooling=(2, 1))
         self.conv2 = MonoPitchBlock2D(
-                256, 32,
-                kernel_size=(5, 1), padding=(0, 0), pooling=(2, 1))
+                256, 256, 
+                kernel_size=(9, 5), padding=(0, 2))
         self.conv3 = MonoPitchBlock2D(
-                32, 32,
-                kernel_size=(7, 5), padding=(0, 2), pooling=(2, 1))
+                256, 32,
+                kernel_size=(9, 3), padding=(0, 1))
         self.conv4 = MonoPitchBlock2D(
-                32, 128,
-                kernel_size=(20, 5), padding=(0, 2))
+                32, 32,
+                kernel_size=(17, 1), padding=(0, 0))
         self.conv5 = MonoPitchBlock2D(
-                128, 256,
-                kernel_size=(20, 5), padding=(0, 2))
+                32, 32,
+                kernel_size=(17, 5), padding=(0, 2))
         self.conv6 = MonoPitchBlock2D(
+                32, 128,
+                kernel_size=(16, 5), padding=(0, 2))
+        self.conv7 = MonoPitchBlock2D(
+                128, 128,
+                kernel_size=(16, 5), padding=(0, 2))
+        self.conv8 = MonoPitchBlock2D(
+                128, 256,
+                kernel_size=(16, 5), padding=(0, 2))
+        self.conv9 = MonoPitchBlock2D(
+                256, 256,
+                kernel_size=(16, 5), padding=(0, 2))
+        self.conv10 = MonoPitchBlock2D(
                 256, 512,
-                kernel_size=(20, 5), padding=(0, 2))
+                kernel_size=(16, 5), padding=(0, 2))
 
         self.pitch_head = nn.Conv1d(
-                in_channels=512 * 3,
+                in_channels=512 * 4,
                 out_channels=no_pitch_bins + int(register_silence),
                 kernel_size=1)
 
@@ -294,12 +306,17 @@ class MonoPitchNet2D(MonoPitchNet1D):
         # always be sure about the right device
         features = features.to(self.device)
 
+        breakpoint()
         embeddings = self.conv1(features)
         embeddings = self.conv2(embeddings)
         embeddings = self.conv3(embeddings)
         embeddings = self.conv4(embeddings)
         embeddings = self.conv5(embeddings)
         embeddings = self.conv6(embeddings)
+        embeddings = self.conv7(embeddings)
+        embeddings = self.conv8(embeddings)
+        embeddings = self.conv9(embeddings)
+        embeddings = self.conv10(embeddings)
 
         embeddings = torch.flatten(embeddings, start_dim=1, end_dim=2)
         embeddings = self.pitch_head(embeddings)
