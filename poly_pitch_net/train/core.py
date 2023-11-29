@@ -77,7 +77,8 @@ def run(model_type: str,
                 string=3,
                 hcqt=True,
                 cqt=False,
-                audio=True)
+                audio=True,
+                ac=True)
 
 
     elif 'poly' in model_type:
@@ -101,6 +102,7 @@ def run(model_type: str,
             log_wandb.config["hcqt"] = model.hcqt
             log_wandb.config["cqt"] = model.cqt
             log_wandb.config["audio"] = model.audio
+            log_wandb.config["ac"] = model.ac
         except:
             pass
 

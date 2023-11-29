@@ -1,7 +1,7 @@
 import poly_pitch_net as ppn
 from poly_pitch_net.models import PitchNet
 # import penn
-from python_forecasting.utils import autocorrelation as autocorr
+from pytorch_forecasting.utils import autocorrelation as autocorr
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
@@ -172,7 +172,7 @@ class MonoPitchNet2D(MonoPitchNet1D):
         assert hcqt != cqt
 
         # if ac is present, then audio has to be present
-        assert (audio || ac) && audio
+        assert (audio or ac) and audio
 
         self.hcqt = hcqt
         self.cqt = cqt
@@ -246,8 +246,6 @@ class MonoPitchNet2D(MonoPitchNet1D):
 
             assert len(feats_audio.shape) == 3
 
-            input[ppn.KEY_AUDIO_CHUNKS] = feats_audio
-
             frame_len = feats_audio.shape[-2]
             pad_right = frame_len - feats_cqt.shape[-2]
 
@@ -256,6 +254,7 @@ class MonoPitchNet2D(MonoPitchNet1D):
 
             # add empty dimention (make it the 2nd dimention) to audio and cqt
             feats_audio = feats_audio[:, None, :, :]
+            input[ppn.KEY_AUDIO_CHUNKS] = feats_audio
             
             assert feats_audio.shape[1] == 1
 
