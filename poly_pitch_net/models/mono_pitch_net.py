@@ -212,8 +212,11 @@ class MonoPitchNet2D(MonoPitchNet1D):
         assert len(input[ppn.KEY_FEATURES].shape) == 4
         
         if self.cqt:
-            input[ppn.KEY_FEATURES] = input[ppn.KEY_FEATURES][:, 0, :, :]
-            input[ppn.KEY_FEATURES] = input[ppn.KEY_FEATURES][:, None, :, :]
+            feats_cqt = input[ppn.KEY_FEATURES][:, 0, :, :]
+            feats_cqt = feats_cqt[:, None, :, :]
+
+            assert feats_cqt.shape[1] == 1
+            input[ppn.KEY_FEATURES] = feats_cqt
 
         # choose string 3
         assert len(input[ppn.KEY_PITCH_ARRAY].shape) == 3
@@ -248,10 +251,8 @@ class MonoPitchNet2D(MonoPitchNet1D):
             feats_cqt = F.pad(feats_cqt, pad=[0, 0, 0, pad_right])
 
             # add empty dimention (make it the 2nd dimention) to audio and cqt
-            # feats_cqt = feats_cqt[:, None, :, :]
             feats_audio = feats_audio[:, None, :, :]
             
-            assert feats_cqt.shape[1] == 1
             assert feats_audio.shape[1] == 1
 
             # concatenate cqt and audio alongside the 2nd dimention
