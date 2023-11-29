@@ -142,8 +142,9 @@ class MonoPitchNet2D(MonoPitchNet1D):
                  no_pitch_bins: int=360,
                  register_silence: bool=False,
                  string: int=3,
+                 hcqt: bool=False,
                  cqt: bool=True,
-                 audio: bool=False,
+                 audio: bool=True,
                  ac: bool=False):
         """Initialize all components of MonoPitchNet model.
 
@@ -154,6 +155,9 @@ class MonoPitchNet2D(MonoPitchNet1D):
                 register_silence (True) with the model or not (False)
             string (int)
                 index of the string to train
+            hcqt (bool)
+                True if input batch should provide HCQT. If True,
+                cqt parameter won't be used.
             cqt (bool)
                 True if input batch should provide CQT
             audio (bool)
@@ -164,11 +168,14 @@ class MonoPitchNet2D(MonoPitchNet1D):
 
         PitchNet.__init__(self)
 
+        assert hcqt != cqt
+
+        self.hcqt = hcqt
         self.cqt = cqt
         self.audio = audio
         self.ac = ac
 
-        self.dim_in = int(self.cqt) + int(self.audio) + int(self.ac)
+        self.dim_in = 6*int(self.hcqt) + int(self.cqt) + int(self.audio) + int(self.ac)
         self.no_pitch_bins = no_pitch_bins
         self.register_silence = register_silence
         self.string = string
@@ -203,8 +210,10 @@ class MonoPitchNet2D(MonoPitchNet1D):
     def pre_proc(self, input: dict):
         # choose HCQT channel 0
         assert len(input[ppn.KEY_FEATURES].shape) == 4
-        input[ppn.KEY_FEATURES] = input[ppn.KEY_FEATURES][:, 0, :, :]
-        input[ppn.KEY_FEATURES] = input[ppn.KEY_FEATURES][:, None, :, :]
+        
+        if self.cqt:
+            input[ppn.KEY_FEATURES] = input[ppn.KEY_FEATURES][:, 0, :, :]
+            input[ppn.KEY_FEATURES] = input[ppn.KEY_FEATURES][:, None, :, :]
 
         # choose string 3
         assert len(input[ppn.KEY_PITCH_ARRAY].shape) == 3

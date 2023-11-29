@@ -24,3 +24,7 @@ After the investigation of the logits and ground truth plots it seems obvious th
 == 27.11.2023
 
 As suspected, the accuracy of the gaussian blur approach is indeed much higher, similar to the one-hot approach. The difference between the two approaches is that the gauss-blur converges much quicker. Perhaps up to two times as quick as one-hot.
+
+== 28.11.2023
+
+Going 2d with more data, now it's the CQT and the time domain audio frames, pushed the accuracy over 70%. Very rarely the performance is evaluated to be below that. Overall the 2D approach seems to achieve sligthly better results than 1D (+5% or up to +10%), but it get's there much quicker! It took MonoPitchNet1D with gauss blur loss about 250 epochs to get up to 70% of RPA for the first time, where MonoPitchNet2D with gauss blur gets there about epoch nr 50 for the first time. RMSE values are much lower as well, mostly in the range 70-90 than 90-110.

@@ -33,7 +33,7 @@ def prepare_and_run(model_type: str,
             # Track hyperparameters and run metadata
             config={
                 "learning_rate": ppn.LEARNING_RATE,
-                "epochs": ppn.STEPS // 2,
+                "epochs": ppn.STEPS,
                 "register_silence" : register_silence,
                 "loss" : loss,
                 "pitch_bins" : ppn.PITCH_BINS,
@@ -75,7 +75,8 @@ def run(model_type: str,
                 no_pitch_bins=ppn.PITCH_BINS,
                 register_silence=register_silence,
                 string=3,
-                cqt=True,
+                hcqt=True,
+                cqt=False,
                 audio=True)
 
 
@@ -95,6 +96,13 @@ def run(model_type: str,
 
     if log_wandb is not None:
         log_wandb.config["architecture"] = str(model)
+
+        try:
+            log_wandb.config["hcqt"] = model.hcqt
+            log_wandb.config["cqt"] = model.cqt
+            log_wandb.config["audio"] = model.audio
+        except:
+            pass
 
     # Create the root directory for the experiment files
     experiment_dir = ppn.tools.misc.get_project_root().parent / '..' / 'generated' / 'experiments' / EX_NAME
@@ -130,7 +138,7 @@ def train(
     step, epoch = 0, 0
 
     # steps progress bar on the screen
-    progress = tqdm(range(ppn.STEPS // 2))
+    progress = tqdm(range(ppn.STEPS))
 
     # train loss message on the screen
     tloss_log = tqdm(total=0, position=1, bar_format='{desc}')
@@ -139,7 +147,7 @@ def train(
     eloss_log = tqdm(total=0, position=2, bar_format='{desc}')
 
 
-    while step < ppn.STEPS // 2:
+    while step < ppn.STEPS:
         model.train()
 
         train_losses = []
