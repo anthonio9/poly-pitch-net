@@ -27,12 +27,19 @@ class GuitarSetPPN(GuitarSet):
 
     Keep in mind that 
     """
-    def __init__(self, **kwargs):
+    def __init__(self, sample_rate: int=44100, seq_length: int=None, hop_length: int=None, **kwargs):
         """
         Initialize the dataset variant.
 
         Parameters
         ----------
+        sample_rate (int)
+            target sample rate, GuitarSet examples will be resampled into it
+
+        seq_length (int)
+            length of one audio frame, if None it will be deducted from 
+            the sample rate and the number of target frames
+            
         See GuitarSet class for others...
         """
 
@@ -44,49 +51,19 @@ class GuitarSetPPN(GuitarSet):
             # Use the same naming scheme as regular GuitarSet
             base_dir = GSET_BASE_DIR
 
+        if hop_length is None:
+            hop_length = ppn.GSET_HOP_LEN
+
         # Update the argument in the collection
         kwargs.update({'base_dir' : base_dir})
-        kwargs.update({'hop_length' : ppn.GSET_HOP_LEN})
-        kwargs.update({'sample_rate' : ppn.GSET_SAMPLE_RATE})
+        kwargs.update({'hop_length' : hop_length})
+        kwargs.update({'sample_rate' : sample_rate if sample_rate is not None
+                       else ppn.GSET_SAMPLE_RATE})
 
         super().__init__(**kwargs)
 
-    # def __getitem__(self, index):
-    #     """
-    #     Retrieve the (potentially randomly sliced) item associated with the selected index.
-    #
-    #     Parameters
-    #     ----------
-    #     index : int
-    #       Index of sampled track
-    #
-    #     Returns
-    #     ----------
-    #     data : dict
-    #       Dictionary containing the features and ground-truth data for the sampled track
-    #     """
-    #
-    #     breakpoint()
-    #
-    #     # Get the name of the track
-    #     track_id = self.tracks[index]
-    #
-    #     # Slice the track's features and ground-truth
-    #     data = self.get_track_data(track_id)
-    #
-    #     # Convert all numpy arrays in the data dictionary to float32
-    #     data = tools.dict_to_dtype(data, dtype=tools.FLOAT32)
-    #
-    #     # Remove any pitch lists, as they cannot be batched
-    #     if tools.query_dict(data, tools.KEY_NOTES):
-    #         data.pop(tools.KEY_NOTES)
-    #
-    #     # Remove sampling rate - it can cause problems if it is not an ndarray. Sample rate
-    #     # should be able to be inferred from the dataset object, if no warnings are thrown
-    #     if tools.query_dict(data, tools.KEY_FS):
-    #         data.pop(tools.KEY_FS)
-    #
-    #     return data
+        # self.seq_length = seq_length
+
 
     def load(self, track):
         """
@@ -149,6 +126,105 @@ class GuitarSetPPN(GuitarSet):
 
                 # Save the data as a NumPy zip file
                 tools.save_dict_npz(gt_path, data_to_save)
+
+        return data
+
+    def get_track_data(self, track_id, sample_start=None, seq_length=None, snap_to_frame=True):
+        """
+        Get the features and ground truth for a track within a time interval.
+
+        Parameters
+        ----------
+        track_id : string
+          Name of track data to fetch
+        sample_start : int
+          Sample with which to begin the slice
+        seq_length : int
+          Number of samples to take for the slice
+        snap_to_frame : bool
+          Whether to begin exactly on frame boundaries or loose samples
+
+        Returns
+        ----------
+        data : dict
+          Dictionary with each entry sliced for the random or provided interval
+        """
+
+        if self.store_data:
+            # Copy the track's ground-truth data into a local dictionary
+            data = deepcopy(self.data[track_id])
+        else:
+            # Load the track's ground-truth
+            data = self.load(track_id)
+
+        if tools.KEY_FEATS not in data.keys():
+            # Calculate the features and add to the dictionary
+            data.update(self.calculate_feats(data))
+
+        # Check to see if a specific sequence length was given
+        if seq_length is None:
+            # If not, and this Dataset object has a sequence length, use it
+            if self.seq_length is not None:
+                seq_length = self.seq_length
+            # Otherwise, we assume the whole track is desired and perform no further actions
+            else:
+                return data
+
+        # If a specific starting sample was not provided, sample one randomly
+        if sample_start is None:
+            sample_start = self.rng.randint(0, len(data[tools.KEY_AUDIO]) - seq_length + 1)
+
+        # Determine the frames contained in this slice
+        frame_start = sample_start // self.hop_length
+        frame_end = frame_start + self.num_frames
+
+        if snap_to_frame:
+            # Snap the sample_start to the left-most frame boundary
+            sample_start = frame_start * self.hop_length
+
+        # Calculate the last sample included in the slice
+        sample_end = sample_start + seq_length
+
+        # Slice the audio
+        data[tools.KEY_AUDIO] = data[tools.KEY_AUDIO][..., sample_start : sample_end + 1]
+
+        # Determine the time in seconds of the boundary samples
+        sec_start = sample_start / self.sample_rate
+        sec_stop = sample_end / self.sample_rate
+
+        if tools.query_dict(data, tools.KEY_NOTES):
+            if isinstance(data[tools.KEY_NOTES], dict):
+                # TODO - assumes stack consists of standard note groups
+                # Extract the stacked notes and convert them to batched representations
+                temp_stacked_notes = tools.apply_func_stacked_representation(data[tools.KEY_NOTES],
+                                                                             tools.notes_to_batched_notes)
+                # Perform time slicing w.r.t. the batched notes along each slice of the stack
+                temp_stacked_notes = tools.apply_func_stacked_representation(temp_stacked_notes,
+                                                                             tools.slice_batched_notes,
+                                                                             start_time=sec_start,
+                                                                             stop_time=sec_stop)
+                # Convert back to standard note groups and update the dictionary
+                data[tools.KEY_NOTES] = tools.apply_func_stacked_representation(temp_stacked_notes,
+                                                                                tools.batched_notes_to_notes)
+            else:
+                # Slice the ground-truth notes if they exist in the ground-truth
+                data[tools.KEY_NOTES] = tools.slice_batched_notes(data[tools.KEY_NOTES], sec_start, sec_stop)
+
+        if tools.query_dict(data, tools.KEY_PITCHLIST):
+            if isinstance(data[tools.KEY_PITCHLIST], dict):
+                # Slice ground-truth pitch list by slice if exists in the ground-truth
+                data[tools.KEY_PITCHLIST] = tools.apply_func_stacked_representation(data[tools.KEY_PITCHLIST],
+                                                                                    tools.slice_pitch_list,
+                                                                                    start_time=sec_start,
+                                                                                    stop_time=sec_stop)
+            else:
+                # Slice ground-truth pitch list if exists in the ground-truth
+                data[tools.KEY_PITCHLIST] = tools.slice_pitch_list(*data[tools.KEY_PITCHLIST], sec_start, sec_stop)
+
+        # Define list of entries to skip during slicing process
+        skipped_keys = [tools.KEY_AUDIO, tools.KEY_FS, tools.KEY_NOTES, tools.KEY_PITCHLIST]
+        # Slice the remaining dictionary entries
+        data = tools.slice_track(data, frame_start, frame_end, skipped_keys)
 
         return data
 

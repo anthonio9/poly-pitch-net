@@ -8,11 +8,7 @@ import torch
 import random
 
 
-def loader(partition: str='train', seed: int=None, data_proc_type: str='HCQT'):
-    """
-    Prepare a GuitarSetPPN data loader.
-    """
-
+def get_dataset_path_seed_splits(partition: str='train', seed: int=None):
     if seed is None:
         seed = ppn.RANDOM_SEED
 
@@ -33,6 +29,18 @@ def loader(partition: str='train', seed: int=None, data_proc_type: str='HCQT'):
         dataset_cache_path = ppn.GSET_CACHE_TRAIN
         dataset_seed = seed
         dataset_splits = splits
+
+    return dataset_cache_path, dataset_seed, dataset_splits 
+
+
+def loader(partition: str='train', seed: int=None, data_proc_type: str='HCQT'):
+    """
+    Prepare a GuitarSetPPN data loader.
+    """
+
+    dataset_cache_path, dataset_seed, dataset_splits = get_dataset_path_seed_splits(
+            partition=partition,
+            seed=seed)
 
     if data_proc_type is 'HCQT':
         # Create an HCQT feature extraction module comprising

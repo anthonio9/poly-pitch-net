@@ -37,6 +37,7 @@ class FCNF0(torch.nn.Sequential):
         return super().forward(frames[:, :, 16:-15])
 
     def post_proc(self, frames):
+        pass
 
 
 class FCNF0Block(nn.Sequential):

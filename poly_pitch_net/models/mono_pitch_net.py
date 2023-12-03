@@ -1,7 +1,7 @@
 import poly_pitch_net as ppn
 from poly_pitch_net.models import PitchNet
 # import penn
-from pytorch_forecasting.utils import autocorrelation as autocorr
+# from pytorch_forecasting.utils import autocorrelation as autocorr
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
@@ -274,12 +274,12 @@ class MonoPitchNet2D(MonoPitchNet1D):
             feats = torch.cat([feats_cqt, feats_audio], dim=1)
             input[ppn.KEY_FEATURES] = feats
 
-        if self.ac:
-            feats_audio = input[ppn.KEY_AUDIO_CHUNKS]
-            feats_ac = autocorr(feats_audio, dim=-2)
-            feats = input[ppn.KEY_FEATURES]
-            feats = torch.cat([feats, feats_ac], dim=1)
-            input[ppn.KEY_FEATURES] = feats
+        # if self.ac:
+        #     feats_audio = input[ppn.KEY_AUDIO_CHUNKS]
+        #     feats_ac = autocorr(feats_audio, dim=-2)
+        #     feats = input[ppn.KEY_FEATURES]
+        #     feats = torch.cat([feats, feats_ac], dim=1)
+        #     input[ppn.KEY_FEATURES] = feats
         
         return input
 
