@@ -16,10 +16,8 @@ def fncf0_cfg():
 
     return batch_size, sr, frame_size, seq_length
 
-def 
-
-
-def test_fcnf0_dataset(fncf0_cfg):
+@pytest.fixture(scope="session", autouse=True)
+def get_dataset(fncf0_cfg):
     batch_size, sample_rate, frame_size, seq_length = fncf0_cfg
     dataset_cache_path, dataset_seed, dataset_splits = ppn.datasets.get_dataset_path_seed_splits('pytest')
 
@@ -47,10 +45,27 @@ def test_fcnf0_dataset(fncf0_cfg):
                               shuffle=True,
                               drop_last=True)
 
+    return loader
+
+
+def test_fcnf0_dataset(fncf0_cfg, get_dataset):
+    batch_size, sample_rate, frame_size, seq_length = fncf0_cfg
+    loader = get_dataset
+
     loader = iter(loader)
     batch = next(loader)
 
     assert list(batch[ppn.KEY_AUDIO].shape) == [batch_size, frame_size]
 
 
-def test_fcnf0_forward(fc)
+def test_fcnf0_forward(fncf0_cfg, get_dataset):
+    batch_size, sample_rate, frame_size, seq_length = fncf0_cfg
+
+    loader = get_dataset
+    loader = iter(loader)
+    batch = next(loader)
+
+    model = ppn.models.FCNF0()
+    output = model.forward(batch)
+
+    assert list(output[ppn.KEY_PITCH_LOGITS].shape) == [batch_size, ppn.PITCH_BINS, 1]

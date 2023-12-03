@@ -17,24 +17,37 @@ class FCNF0(torch.nn.Sequential):
     no normalization in FCNF0++
     """
 
-    def __init__(self):
+    def __init__(self, no_pitch_bins: int=ppn.PITCH_BINS, string: int=3):
+        self.no_pitch_bins = no_pitch_bins
+        self.string = string
+
         layers = (
-            Block(1, 256, 481, (2, 2)),
-            Block(256, 32, 225, (2, 2)),
-            Block(32, 32, 97, (2, 2)),
-            Block(32, 128, 66),
-            Block(128, 256, 35),
-            Block(256, 512, 4),
-            torch.nn.Conv1d(512, ppn.PITCH_BINS, 4))
+            FCNF0Block(1, 256, 481, (2, 2)),
+            FCNF0Block(256, 32, 225, (2, 2)),
+            FCNF0Block(32, 32, 97, (2, 2)),
+            FCNF0Block(32, 128, 66),
+            FCNF0Block(128, 256, 35),
+            FCNF0Block(256, 512, 4),
+            torch.nn.Conv1d(512, no_pitch_bins, 4))
         super().__init__(*layers)
 
-    def pre_proc(self):
-        pass
+    def pre_proc(self, input):
+        assert input[ppn.KEY_AUDIO].shape[-1] == 1024
 
-    def forward(self, frames):
-        # shape=(batch, 1, penn.WINDOW_SIZE) =>
-        # shape=(batch, penn.PITCH_BINS, penn.NUM_TRAINING_FRAMES)
-        return super().forward(frames[:, :, 16:-15])
+        # transform [batch_size, samples] -> 
+        # [batch_size, 1, samples]
+        input[ppn.KEY_AUDIO] = input[ppn.KEY_AUDIO][:, None, :]
+
+        return input
+
+    def forward(self, input):
+        input = self.pre_proc(input)
+        frames = input[ppn.KEY_AUDIO]
+
+        output = {}
+        output[ppn.KEY_PITCH_LOGITS] = super().forward(frames[:, :, 16:-15])
+
+        return output
 
     def post_proc(self, frames):
         pass
