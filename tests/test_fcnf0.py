@@ -16,6 +16,7 @@ def fncf0_cfg():
 
     return batch_size, sr, frame_size, seq_length
 
+
 @pytest.fixture(scope="session", autouse=True)
 def get_dataset(fncf0_cfg):
     batch_size, sample_rate, frame_size, seq_length = fncf0_cfg
@@ -34,16 +35,17 @@ def get_dataset(fncf0_cfg):
             num_frames=frame_size // seq_length,
             data_proc=data_proc,
             profile=profile,
-            reset_data=False, # set to true in the future trainings
-            save_data=True, # set to true in the future trainings
+            reset_data=False,  # set to true in the future trainings
+            save_data=True,  # set to true in the future trainings
             save_loc=dataset_cache_path / 'fcnf0',
             seed=dataset_seed)
 
     # Create a PyTorch data loader for the dataset
-    loader = torch.utils.data.DataLoader(dataset=gset,
-                              batch_size=batch_size,
-                              shuffle=True,
-                              drop_last=True)
+    loader = torch.utils.data.DataLoader(
+            dataset=gset,
+            batch_size=batch_size,
+            shuffle=True,
+            drop_last=True)
 
     return loader
 

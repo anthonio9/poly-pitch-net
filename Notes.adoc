@@ -132,3 +132,8 @@ awk -v RS='' '/multi_pitch/' * | grep precision | awk '{sum+=$3} END {print "AVG
 == Data augmentation strategies for neural network F0 Estimation
 
 Lauri's paper on audio pitch estimation + refernces on how to measure performacne
+
+== 25.10.2023 
+
+Try different LOSS functions. Binary cross entropy, FretNet loss for pitch, categorical loss if there's time.
+*Speed UP*

@@ -77,7 +77,7 @@ class MonoPitchNet1D(PitchNet):
         C - number of the CQT / STFT bins, given in the init function
         O - number of pitch bins, given in the init function
         """
-        inpput = self.pre_proc(input)
+        input = self.pre_proc(input)
         features = input[ppn.KEY_FEATURES]
 
         # always be sure about the right device
