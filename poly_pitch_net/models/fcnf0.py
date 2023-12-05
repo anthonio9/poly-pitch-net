@@ -1,15 +1,15 @@
 import poly_pitch_net as ppn
-from poly_pitch_net.models import PitchNet
+from poly_pitch_net.models import PitchNet, MonoPitchNet1D
 import torch.nn as nn
 import torch
-import torch.nn.functional as F
-from typing import Tuple
+# import torch.nn.functional as F
+# from typing import Tuple
 from copy import deepcopy
 
 
-class FCNF0(PitchNet):
+class FCNF0(MonoPitchNet1D):
     """Reimplementation of penn's FCNF0 interpretation: FCNF0++
-    
+
     5 cents of bin width
     1440 pitch bins
     128 batch size
@@ -19,7 +19,7 @@ class FCNF0(PitchNet):
     """
 
     def __init__(self, no_pitch_bins: int = ppn.PITCH_BINS, string: int = 3):
-        super().__init__()
+        PitchNet.__init__(self)
 
         self.no_pitch_bins = no_pitch_bins
         self.string = string

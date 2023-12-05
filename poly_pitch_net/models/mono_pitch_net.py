@@ -9,19 +9,19 @@ from typing import Tuple
 
 
 class MonoPitchNet1D(PitchNet):
-    """A small model focused on guitar pitch recognition. 
+    """A small model focused on guitar pitch recognition.
 
-    The purpose of the model is to recognize pitch from one string only, 
-    no matter the amount of strings taking part in the provided data. 
+    The purpose of the model is to recognize pitch from one string only,
+    no matter the amount of strings taking part in the provided data.
 
-    The main aim is to use this model as means of understanding the issues with the larger 
+    The main aim is to use this model as means of understanding the issues with the larger
     PolyPitchNet model. First undrestand, then fix them.
 
     MonoPitchNet is expecting only one block of CQT / STFT per time step.
     """
 
-    def __init__(self, dim_in: int, no_pitch_bins: int=360,
-                 register_silence: bool=False, string=3):
+    def __init__(self, dim_in: int, no_pitch_bins: int = 360,
+                 register_silence: bool = False, string=3):
         """Initialize all components of MonoPitchNet model.
 
         Args:
@@ -57,7 +57,7 @@ class MonoPitchNet1D(PitchNet):
         # choose string 3
         assert len(input[ppn.KEY_PITCH_ARRAY].shape) == 3
         input[ppn.KEY_PITCH_ARRAY] = input[ppn.KEY_PITCH_ARRAY][:, self.string, :]
-        
+
         return input
 
     def forward(self, input):
@@ -131,22 +131,22 @@ class MonoPitchNet1D(PitchNet):
         return input
 
 
-
 class MonoPitchNet2D(MonoPitchNet1D):
-    """A small model focused on guitar pitch recognition. 
+    """A small model focused on guitar pitch recognition.
 
     This model combines multiple inputes, for example CQT and time domain audio
-    or STFTs of differet sizes. The goal of this model is to increase short-time 
+    or STFTs of differet sizes. The goal of this model is to increase short-time
     pitch deviation detection adn get the overall accuracy (+-20 cents) up to 80%.
     """
-    def __init__(self, 
-                 no_pitch_bins: int=360,
-                 register_silence: bool=False,
-                 string: int=3,
-                 hcqt: bool=False,
-                 cqt: bool=True,
-                 audio: bool=True,
-                 ac: bool=False):
+
+    def __init__(self,
+                 no_pitch_bins: int = 360,
+                 register_silence: bool = False,
+                 string: int = 3,
+                 hcqt: bool = False,
+                 cqt: bool = True,
+                 audio: bool = True,
+                 ac: bool = False):
         """Initialize all components of MonoPitchNet model.
 
         Args:
@@ -188,10 +188,10 @@ class MonoPitchNet2D(MonoPitchNet1D):
         # and pooling tuples (x, y), x is related to 3rd dim, y to 4th dim (time)
 
         self.conv1 = MonoPitchBlock2D(
-                self.dim_in, 256, 
+                self.dim_in, 256,
                 kernel_size=(3, 3), padding=(1, 1), pooling=(2, 1))
         self.conv2 = MonoPitchBlock2D(
-                256, 256, 
+                256, 256,
                 kernel_size=(9, 5), padding=(0, 2))
         self.conv3 = MonoPitchBlock2D(
                 256, 32,
@@ -226,7 +226,7 @@ class MonoPitchNet2D(MonoPitchNet1D):
     def pre_proc(self, input: dict):
         # choose HCQT channel 0
         assert len(input[ppn.KEY_FEATURES].shape) == 4
-        
+
         if self.cqt:
             feats_cqt = input[ppn.KEY_FEATURES][:, 0, :, :]
             feats_cqt = feats_cqt[:, None, :, :]
@@ -238,20 +238,19 @@ class MonoPitchNet2D(MonoPitchNet1D):
         assert len(input[ppn.KEY_PITCH_ARRAY].shape) == 3
         input[ppn.KEY_PITCH_ARRAY] = input[ppn.KEY_PITCH_ARRAY][:, self.string, :]
 
-
         # pad the CQT if time audio is on the 2nd channel
         if self.audio:
             # get features for audio and cqt
-            feats_audio = input[ppn.KEY_AUDIO] 
+            feats_audio = input[ppn.KEY_AUDIO]
             feats_cqt = input[ppn.KEY_FEATURES]
-            
+
             # chunk audio, cause dataset does not do it yet
             chunks = input[ppn.KEY_PITCH_ARRAY].shape[-1]
             pad_right = chunks * ppn.GSET_HOP_LEN - feats_audio.shape[-1]
 
             # padd up to a nice value of 200 * 256 frames
             feats_audio = nn.functional.pad(feats_audio, (0, pad_right), 'constant', 0)
-            
+
             # chunk and re-chunk
             feats_audio_chunked = feats_audio.chunk(chunks=chunks, dim=-1)
             feats_audio = torch.stack(feats_audio_chunked, dim=-1)
