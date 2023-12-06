@@ -35,15 +35,22 @@ class FCNF0(MonoPitchNet1D):
     def pre_proc(self, input):
         assert input[ppn.KEY_AUDIO].shape[-1] == 1024
 
-        output = deepcopy(input)
+        #output = {}
+        #output[ppn.KEY_AUDIO] = deepcopy(input[ppn.KEY_AUDIO])
+        #output[ppn.KEY_PITCH_ARRAY] = deepcopy(input[ppn.KEY_PITCH_ARRAY])
 
-        # transform [batch_size, samples] ->
-        # [batch_size, 1, samples]
-        output[ppn.KEY_AUDIO] = output[ppn.KEY_AUDIO][:, None, :]
-        output[ppn.KEY_PITCH_ARRAY] = output[ppn.KEY_PITCH_ARRAY][:, self.string, -1]
-        output[ppn.KEY_PITCH_ARRAY] = output[ppn.KEY_PITCH_ARRAY][:, None]
+        ## transform [batch_size, samples] ->
+        ## [batch_size, 1, samples]
+        #output[ppn.KEY_AUDIO] = output[ppn.KEY_AUDIO][:, None, :]
+        #output[ppn.KEY_PITCH_ARRAY] = output[ppn.KEY_PITCH_ARRAY][:, self.string, -1]
+        #output[ppn.KEY_PITCH_ARRAY] = output[ppn.KEY_PITCH_ARRAY][:, None]
 
-        return output
+        input[ppn.KEY_AUDIO] = input[ppn.KEY_AUDIO][:, None, :]
+        input[ppn.KEY_PITCH_ARRAY] = input[ppn.KEY_PITCH_ARRAY][:, self.string, -1]
+        input[ppn.KEY_PITCH_ARRAY] = input[ppn.KEY_PITCH_ARRAY][:, None]
+
+        #return output
+        return input 
 
     def forward(self, input):
         input = self.pre_proc(input)

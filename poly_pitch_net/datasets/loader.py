@@ -53,6 +53,7 @@ def loader(partition: str = 'train',
         hop_length = ppn.GSET_HOP_LEN // 4
         num_frames = 1024 // hop_length
         dataset_cache_path = dataset_cache_path / model_type
+        print(f"sample_rate: {sample_rate}")
 
     if data_proc_type is None:
         data_proc = None
@@ -75,15 +76,18 @@ def loader(partition: str = 'train',
 
     print(f"Preparing the dataset in {dataset_cache_path}")
     # Create a dataset
-    gset = GuitarSetPPN(base_dir=ppn.GSET_BASE_DIR,
-                           splits=dataset_splits,
-                           num_frames=num_frames,
-                           data_proc=data_proc,
-                           profile=profile,
-                           reset_data=False, # set to true in the future trainings
-                           save_data=True, # set to true in the future trainings
-                           save_loc=dataset_cache_path,
-                           seed=dataset_seed)
+    gset = GuitarSetPPN(
+            base_dir=ppn.GSET_BASE_DIR,
+            hop_length=hop_length,
+            sample_rate=sample_rate,
+            splits=dataset_splits,
+            num_frames=num_frames,
+            data_proc=data_proc,
+            profile=profile,
+            reset_data=False, # set to true in the future trainings
+            save_data=True, # set to true in the future trainings
+            save_loc=dataset_cache_path,
+            seed=dataset_seed)
 
     # Create a PyTorch data loader for the dataset
     loader = torch.utils.data.DataLoader(dataset=gset,

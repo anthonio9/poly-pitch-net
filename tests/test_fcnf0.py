@@ -85,3 +85,32 @@ def test_fcnf0_forward(fncf0_cfg, get_dataset):
     output = model.forward(batch)
 
     assert list(output[ppn.KEY_PITCH_LOGITS].shape) == [batch_size, ppn.PITCH_BINS, 1]
+
+
+def test_fcnf0_forward_loader():
+    loader = ppn.datasets.loader(
+            'pytest',
+            model_type='fcnf0',
+            data_proc_type='STFT')
+
+    loader = iter(loader)
+    batch = next(loader)
+
+    model = ppn.models.FCNF0()
+    output = model.forward(batch)
+
+    assert list(output[ppn.KEY_PITCH_LOGITS].shape) == [30, ppn.PITCH_BINS, 1]
+
+def test_fcnf0_forward_loader_full():
+    loader = ppn.datasets.loader(
+            'pytest',
+            model_type='fcnf0',
+            data_proc_type='STFT')
+
+    model = ppn.models.FCNF0()
+    model.change_device(0)
+    model.train()
+
+    for batch in loader:
+        output = model.forward(batch)
+        assert list(output[ppn.KEY_PITCH_LOGITS].shape) == [30, ppn.PITCH_BINS, 1]
