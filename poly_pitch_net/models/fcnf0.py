@@ -48,6 +48,7 @@ class FCNF0(MonoPitchNet1D):
     def forward(self, input):
         input = self.pre_proc(input)
         frames = input[ppn.KEY_AUDIO]
+        frames = frames.to(self.device)
 
         embeddings = self.conv1(frames[:, :, 16:-15])
         embeddings = self.conv2(embeddings)

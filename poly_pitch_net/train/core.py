@@ -112,7 +112,7 @@ def run(model_type: str,
             log_wandb.config["cqt"] = model.cqt
             log_wandb.config["audio"] = model.audio
             log_wandb.config["ac"] = model.ac
-        except Exception():
+        except BaseException:
             pass
 
     # Create the root directory for the experiment files
@@ -216,27 +216,27 @@ def train(
         tloss_log.set_description(f"Train loss: {train_losses}")
 
         # because there's 8 batches in every train loader
-        if step % 80 == 0:
-            eval_loss, metric_dict = evaluate(val_loader, model, loss_type, log_wandb)
-        else:
-            eval_loss, metric_dict = evaluate(val_loader, model, loss_type, None)
+        #if step % 80 == 0:
+        #    eval_loss, metric_dict = evaluate(val_loader, model, loss_type, log_wandb)
+        #else:
+        #    eval_loss, metric_dict = evaluate(val_loader, model, loss_type, None)
 
         # log the evaluation loss
-        writer.add_scalar(tag='eval_loss_' + ppn.LOSS_BCE,
-                          scalar_value=eval_loss,
-                          global_step=step)
-        write_metrics(writer, step, metric_dict)
+        #writer.add_scalar(tag='eval_loss_' + ppn.LOSS_BCE,
+        #                  scalar_value=eval_loss,
+        #                  global_step=step)
+        #write_metrics(writer, step, metric_dict)
 
         if log_wandb is not None:
             metric_dict["train_loss"] = train_losses
             metric_dict["eval_loss"] = eval_loss
             log_wandb.log(metric_dict)
 
-        eloss_log.set_description(
-                f'Evaluation loss: {eval_loss} '
-                f'acc: {metric_dict["accuracy"]} '
-                f'rmse: {metric_dict["RMSE"]} '
-                f'rpa: {metric_dict["RPA"]}')
+        #eloss_log.set_description(
+        #        f'Evaluation loss: {eval_loss} '
+        #        f'acc: {metric_dict["accuracy"]} '
+        #        f'rmse: {metric_dict["RMSE"]} '
+        #        f'rpa: {metric_dict["RPA"]}')
 
         epoch += 1
 

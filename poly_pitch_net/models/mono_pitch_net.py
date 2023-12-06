@@ -105,7 +105,6 @@ class MonoPitchNet1D(PitchNet):
             input (dict)
                 output returned from the forward function
         """
-        breakpoint()
         logits = input[ppn.KEY_PITCH_LOGITS]
         # reshape [B, O, T] into [B, T, O]
         logits = logits.permute(0, 2, 1)
@@ -306,7 +305,6 @@ class MonoPitchNet2D(MonoPitchNet1D):
         # always be sure about the right device
         features = features.to(self.device)
 
-        breakpoint()
         embeddings = self.conv1(features)
         embeddings = self.conv2(embeddings)
         embeddings = self.conv3(embeddings)
