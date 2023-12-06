@@ -1,5 +1,5 @@
 import amt_tools.tools
-from amt_tools.features import HCQT
+from amt_tools.features import HCQT, STFT
 import librosa
 from poly_pitch_net.datasets.guitarset import GuitarSetPPN
 import poly_pitch_net as ppn
@@ -35,7 +35,7 @@ def get_dataset_path_seed_splits(partition: str='train', seed: int=None):
 
 def loader(partition: str = 'train',
            seed: int = None,
-           data_proc='HCQT', model_type='mono'):
+           data_proc_type='HCQT', model_type='mono'):
     """
     Prepare a GuitarSetPPN data loader.
     """
@@ -51,9 +51,13 @@ def loader(partition: str = 'train',
     if model_type == 'fcnf0':
         sample_rate = ppn.GSET_SAMPLE_RATE // 4
         hop_length = ppn.GSET_HOP_LEN // 4
-        num_frames = 1
+        num_frames = 1024 // hop_length
+        dataset_cache_path = dataset_cache_path / model_type
 
-    if 'HCQT' in data_proc:
+    if data_proc_type is None:
+        data_proc = None
+
+    elif 'HCQT' in data_proc_type:
         # Create an HCQT feature extraction module comprising
         # the first five harmonics and a sub-harmonic, where each
         # harmonic transform spans 4 octaves w/ 3 bins per semitone
@@ -62,6 +66,10 @@ def loader(partition: str = 'train',
                          fmin=librosa.note_to_hz('E2'),
                          harmonics=[0.5, 1, 2, 3, 4, 5],
                          n_bins=144, bins_per_octave=36)
+
+    elif 'STFT' in data_proc_type:
+        data_proc = STFT(hop_length=hop_length,
+                         sample_rate=sample_rate)
 
     profile = amt_tools.tools.GuitarProfile(num_frets=19)
 

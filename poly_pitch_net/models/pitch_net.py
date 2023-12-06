@@ -9,6 +9,7 @@ class PitchNet(nn.Module):
     def __init__(self):
         nn.Module.__init__(self)
         self.device = torch.device('cpu')
+        self.register_silence = False
 
     @classmethod
     def model_name(cls):

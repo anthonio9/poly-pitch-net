@@ -16,6 +16,7 @@ import wandb
 
 def prepare_and_run(
         model_type: str,
+        data_proc_type: str = 'HCQT',
         gpu: int = None,
         loss: str = ppn.LOSS_ONE_HOT,
         register_silence: bool = False,
@@ -44,6 +45,7 @@ def prepare_and_run(
         print("silence wont be registered")
 
     run(model_type,
+        data_proc_type,
         gpu,
         loss,
         register_silence,
@@ -51,6 +53,7 @@ def prepare_and_run(
 
 
 def run(model_type: str,
+        data_proc_type: str = 'HCQT',
         gpu: int = None,
         loss: str = ppn.LOSS_ONE_HOT,
         register_silence: bool = False,
@@ -118,8 +121,14 @@ def run(model_type: str,
     # Create a log directory for the training experiment
     model_dir = experiment_dir / 'models'
 
-    train_loader = ppn.datasets.loader('train')
-    val_loader = ppn.datasets.loader('val')
+    train_loader = ppn.datasets.loader(
+            'train',
+            model_type=model_type,
+            data_proc_type=data_proc_type)
+    val_loader = ppn.datasets.loader(
+            'val',
+            model_type=model_type,
+            data_proc_type=data_proc_type)
 
     model.change_device(device=gpu)
 
@@ -166,6 +175,9 @@ def train(
 
                 # Forward pass
                 output = model(batch)
+
+                # get the ground truth processed
+                batch = model.pre_proc(batch)
 
                 # pitch array is already pre-processed
                 pitch_array = batch[ppn.KEY_PITCH_ARRAY]
@@ -268,6 +280,9 @@ def evaluate(
         for batch in loader:
             # set the pitch names to something
             output = model(batch)
+
+            # get the ground truth processed
+            batch = model.pre_proc(batch)
 
             # process into pitch cents
             output = model.post_proc(output)

@@ -40,6 +40,8 @@ class FCNF0(MonoPitchNet1D):
         # transform [batch_size, samples] ->
         # [batch_size, 1, samples]
         output[ppn.KEY_AUDIO] = output[ppn.KEY_AUDIO][:, None, :]
+        output[ppn.KEY_PITCH_ARRAY] = output[ppn.KEY_PITCH_ARRAY][:, self.string, -1]
+        output[ppn.KEY_PITCH_ARRAY] = output[ppn.KEY_PITCH_ARRAY][:, None]
 
         return output
 
@@ -59,9 +61,6 @@ class FCNF0(MonoPitchNet1D):
         output[ppn.KEY_PITCH_LOGITS] = embeddings
 
         return output
-
-    def post_proc(self, frames):
-        pass
 
 
 class FCNF0Block(nn.Sequential):

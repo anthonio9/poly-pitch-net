@@ -60,6 +60,20 @@ def test_fcnf0_dataset(fncf0_cfg, get_dataset):
     assert list(batch[ppn.KEY_AUDIO].shape) == [batch_size, frame_size]
 
 
+def test_fcnf0_pre_proc(fncf0_cfg, get_dataset):
+    batch_size, sample_rate, frame_size, seq_length = fncf0_cfg
+
+    loader = get_dataset
+    loader = iter(loader)
+    batch = next(loader)
+
+    model = ppn.models.FCNF0()
+    output = model.pre_proc(batch)
+
+    assert list(output[ppn.KEY_AUDIO].shape) == [batch_size, 1, 1024]
+    assert list(output[ppn.KEY_PITCH_ARRAY].shape) == [batch_size, 1]
+
+
 def test_fcnf0_forward(fncf0_cfg, get_dataset):
     batch_size, sample_rate, frame_size, seq_length = fncf0_cfg
 

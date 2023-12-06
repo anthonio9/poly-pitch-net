@@ -105,6 +105,7 @@ class MonoPitchNet1D(PitchNet):
             input (dict)
                 output returned from the forward function
         """
+        breakpoint()
         logits = input[ppn.KEY_PITCH_LOGITS]
         # reshape [B, O, T] into [B, T, O]
         logits = logits.permute(0, 2, 1)
