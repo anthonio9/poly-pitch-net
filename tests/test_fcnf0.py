@@ -9,7 +9,7 @@ import torch
 
 @pytest.fixture(scope="session", autouse=True)
 def fncf0_cfg():
-    batch_size = 48
+    batch_size = 30 
     sr = 11025
     frame_size = 1024
     seq_length = 256 // 4
@@ -58,6 +58,16 @@ def test_fcnf0_dataset(fncf0_cfg, get_dataset):
     batch = next(loader)
 
     assert list(batch[ppn.KEY_AUDIO].shape) == [batch_size, frame_size]
+
+
+def test_fcnf0_dataset_iter(fncf0_cfg, get_dataset):
+    batch_size, sample_rate, frame_size, seq_length = fncf0_cfg
+    loader = get_dataset
+
+    for i in range(10):
+        for batch in loader:
+            print(f"iter: {i}, batch_size: {batch[ppn.KEY_TIMES].shape[0]}, \n {batch[ppn.KEY_TIMES][:, -1]}")
+            assert list(batch[ppn.KEY_AUDIO].shape) == [batch_size, frame_size]
 
 
 def test_fcnf0_pre_proc(fncf0_cfg, get_dataset):
