@@ -3,6 +3,7 @@ from poly_pitch_net.datasets.guitarset import GuitarSetPPN
 from poly_pitch_net.models import FretNetCrepe
 from poly_pitch_net.models import MonoPitchNet1D
 from poly_pitch_net.models import MonoPitchNet2D
+from poly_pitch_net.models import PolyPitchNet
 import amt_tools.tools
 from amt_tools.features import HCQT
 
@@ -78,9 +79,17 @@ def run(model_type: str,
                 hcqt=True,
                 cqt=False,
                 audio=True)
+    
+    elif 'polypitchnet' in model_type:
+        EX_NAME = '_'.join([PolyPitchNet.model_name(),
+                            GuitarSetPPN.dataset_name(),
+                            HCQT.features_name()])
 
+        model = PolyPitchNet(
+                no_pitch_bins=ppn.PITCH_BINS,
+                register_silence=register_silence)
 
-    elif 'poly' in model_type:
+    elif 'crep' in model_type:
         EX_NAME = '_'.join([FretNetCrepe.model_name(),
                             GuitarSetPPN.dataset_name(),
                             HCQT.features_name()])
